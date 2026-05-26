@@ -9,7 +9,7 @@ export async function login(payload: LoginPayload) {
 export async function register(payload: RegisterPayload) {
   const { data } = await api.post<AuthResponse>("/auth/register", payload);
   return data;
-}
+} 
 
 export async function getCurrentUser() {
   const { data } = await api.get<AuthUser>("/auth/me");

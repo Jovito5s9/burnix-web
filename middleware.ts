@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
 
   if (!isProtectedRoute) {
     return NextResponse.next();
-  }
+  } 
 
   const token = request.cookies.get("burnix.access_token")?.value;
 

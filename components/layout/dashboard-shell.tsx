@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { APP_NAME, dashboardNavLinks } from "@/lib/constants";
@@ -5,7 +6,7 @@ import { APP_NAME, dashboardNavLinks } from "@/lib/constants";
 export function DashboardShell({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50">

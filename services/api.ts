@@ -2,6 +2,16 @@ import axios from "axios";
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+function readToken() { 
+  if (typeof window === "undefined") return null;
+
+  const localToken = window.localStorage.getItem("burnix.access_token");
+  if (localToken) return localToken;
+
+  const cookieMatch = document.cookie.match(/(?:^|; )burnix\.access_token=([^;]+)/);
+  return cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+}
+
 export const api = axios.create({
   baseURL,
   headers: {
@@ -10,10 +20,10 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  // Espaço para anexar token quando a autenticação estiver pronta.
-  const token = typeof window !== "undefined" ? localStorage.getItem("burnix.access_token") : null;
+  const token = readToken();
 
   if (token) {
+    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
   }
 
@@ -23,6 +33,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error?.response?.status;
+
+    if (status === 401 && typeof window !== "undefined") {
+      window.localStorage.removeItem("burnix.access_token");
+    }
+
     const message =
       error?.response?.data?.detail ??
       error?.response?.data?.message ??

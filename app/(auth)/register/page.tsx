@@ -1,30 +1,28 @@
 import Link from "next/link";
-import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Container } from "@/components/layout/container";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RegisterForm } from "@/components/forms/register-form";
 
-export default function Page() {
+export default function RegisterPage() {
   return (
     <section className="py-16">
       <Container className="max-w-md">
         <Card>
           <CardHeader>
             <CardTitle>Criar conta</CardTitle>
-            <CardDescription>Inicie o cadastro da operação e prepare o fluxo de inscrições.</CardDescription>
+            <CardDescription>
+              Cadastre-se para começar a gerenciar inscrições e pagamentos.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert variant="info" title="Base visual provisória">
-              Esta rota já existe para validação de layout e navegação. Os campos
-              de autenticação podem ser ligados depois ao backend.
-            </Alert>
-            <div className="flex gap-3">
-              <Button asChild>
-                <Link href="/dashboard">Criar acesso</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link href="/">Voltar</Link>
-              </Button>
+
+          <CardContent className="space-y-6">
+            <RegisterForm />
+
+            <div className="text-center text-sm text-zinc-500">
+              Já possui conta? {" "}
+              <Link className="font-medium text-zinc-900 hover:underline" href="/login">
+                Entrar
+              </Link>
             </div>
           </CardContent>
         </Card>

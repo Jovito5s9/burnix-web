@@ -6,7 +6,7 @@ import type { LoginPayload, RegisterPayload } from "@/types/auth";
 
 export function useAuth() {
   const queryClient = useQueryClient();
-
+ 
   const meQuery = useQuery({
     queryKey: ["auth", "me"],
     queryFn: getCurrentUser,
@@ -17,7 +17,9 @@ export function useAuth() {
     mutationFn: (payload: LoginPayload) => login(payload),
     onSuccess: async (data) => {
       if (typeof window !== "undefined") {
-        localStorage.setItem("burnix.access_token", data.accessToken);
+        localStorage.setItem("burnix.access_token", data.access_token);
+
+        document.cookie = `burnix.access_token=${data.access_token}; path=/`;
       }
       await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
@@ -27,7 +29,9 @@ export function useAuth() {
     mutationFn: (payload: RegisterPayload) => register(payload),
     onSuccess: async (data) => {
       if (typeof window !== "undefined") {
-        localStorage.setItem("burnix.access_token", data.accessToken);
+        localStorage.setItem("burnix.access_token", data.access_token);
+        document.cookie = `burnix.access_token=${data.access_token}; path=/`;
+
       }
       await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
@@ -43,6 +47,8 @@ export function useAuth() {
     logout: () => {
       if (typeof window !== "undefined") {
         localStorage.removeItem("burnix.access_token");
+        document.cookie =
+          "burnix.access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
       queryClient.removeQueries({ queryKey: ["auth", "me"] });
     },
