@@ -1,10 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Container } from "@/components/layout/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { APP_NAME, navLinks } from "@/lib/constants";
 
+const protectedPrefixes = ["/dashboard", "/contracts", "/payments", "/settings"];
+
 export function Navbar() {
+  const pathname = usePathname();
+  const isProtectedRoute = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+
+  if (isProtectedRoute) {
+    return null;
+  }
+
   return (
     <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
       <Container className="flex h-16 items-center justify-between gap-4">
