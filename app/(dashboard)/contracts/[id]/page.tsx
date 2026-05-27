@@ -1,11 +1,15 @@
 import { ContractDetail } from "@/components/dashboard/contract-detail";
 
 type ContractDetailsPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
-export default function ContractDetailsPage({ params }: ContractDetailsPageProps) {
-  return <ContractDetail id={params.id} />;
+export default async function ContractDetailsPage({
+  params,
+}: ContractDetailsPageProps) {
+  const { id } = await params;
+
+  return <ContractDetail id={id} />;
 }

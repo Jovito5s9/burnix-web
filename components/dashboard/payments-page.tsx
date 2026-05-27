@@ -61,15 +61,25 @@ export function PaymentsPage() {
               <CardTitle>Pagamentos registrados</CardTitle>
               <CardDescription>{paymentsQuery.total} eventos carregados da API.</CardDescription>
             </div>
-            <Button asChild variant="secondary" size="sm">
-              <Link href="/dashboard">Ir ao dashboard</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/contracts">Ver contratos</Link>
+              </Button>
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/dashboard">Ir ao dashboard</Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {paymentsQuery.payments.length === 0 ? (
               <EmptyState
                 title="Nenhum pagamento encontrado"
                 description="Assim que o backend devolver cobranças, elas aparecerão aqui."
+                action={
+                  <Button asChild>
+                    <Link href="/contracts">Ir para contratos</Link>
+                  </Button>
+                }
               />
             ) : (
               <div className="grid gap-4">

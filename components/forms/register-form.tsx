@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register, isRegistering } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -30,7 +31,7 @@ export function RegisterForm() {
 
     try {
       await register(formData);
-      router.push("/dashboard");
+      router.push(searchParams.get("next") ?? "/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível criar a conta.");
     }

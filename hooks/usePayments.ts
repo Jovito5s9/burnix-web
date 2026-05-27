@@ -1,33 +1,51 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPayment, getPayment, listPayments } from "@/services/payments";
-import type { Payment, PaymentCreatePayload, PaymentListResponse } from "@/types/payment";
 
-export function usePayments(contractId?: string) {
-  const paymentsQuery = useQuery({
-    queryKey: ["payments"],
+import {
+  createPayment,
+  getPayment,
+  listPayments,
+} from "@/services/payments";
+
+import type {
+  Payment,
+  PaymentCreatePayload,
+} from "@/types/payment";
+
+function appendOptimisticPayment(
+  current: Payment[] | undefined,
+  optimistic_payment: Payment
+): Payment[] {
+  return [optimistic_payment, ...(current ?? [])];
+}
+
+export function usePayments(contract_id?: string) {
+  const payments_query = useQuery({
+    queryKey: ["payments", contract_id ?? "all"],
     queryFn: listPayments,
     staleTime: 30 * 1000,
   });
 
-  const payments = contractId
-    ? paymentsQuery.data?.items.filter((payment) => payment.contractId === contractId) ?? []
-    : paymentsQuery.data?.items ?? [];
+  const payments = contract_id
+    ? payments_query.data?.filter(
+        (payment) => payment.contract_id === Number(contract_id)
+      ) ?? []
+    : payments_query.data ?? [];
 
   return {
     payments,
-    total: contractId ? payments.length : paymentsQuery.data?.total ?? 0,
-    isLoading: paymentsQuery.isLoading,
-    isFetching: paymentsQuery.isFetching,
-    error: paymentsQuery.error,
-    refetch: paymentsQuery.refetch,
+    total: payments.length,
+    is_loading: payments_query.isLoading,
+    is_fetching: payments_query.isFetching,
+    error: payments_query.error,
+    refetch: payments_query.refetch,
   };
 }
 
 export function usePaymentById(id: string) {
   return useQuery({
-    queryKey: ["payments", id],
+    queryKey: ["payments", "detail", id],
     queryFn: () => getPayment(id),
     enabled: Boolean(id),
     staleTime: 30 * 1000,
@@ -35,57 +53,169 @@ export function usePaymentById(id: string) {
 }
 
 export function useCreatePayment() {
-  const queryClient = useQueryClient();
+  const query_client = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: PaymentCreatePayload) => createPayment(payload),
+    mutationFn: (payload: PaymentCreatePayload) =>
+      createPayment(payload),
+
     onMutate: async (payload) => {
-      await queryClient.cancelQueries({ queryKey: ["payments"] });
+      await query_client.cancelQueries({
+        queryKey: ["payments"],
+      });
 
-      const previousPayments = queryClient.getQueryData<PaymentListResponse>(["payments"]);
+      const previous_payments_all =
+        query_client.getQueryData<Payment[]>([
+          "payments",
+          "all",
+        ]);
 
-      const optimisticPayment: Payment = {
+      const previous_payments_by_contract =
+        query_client.getQueryData<Payment[]>([
+          "payments",
+          payload.contract_id,
+        ]);
+
+      const optimistic_payment: Payment = {
         id: `optimistic-${Date.now()}`,
-        contractId: payload.contractId,
-        amount: payload.amount,
+        contract_id: Number(payload.contract_id),
+        amount: Number(payload.amount),
         status: "pending",
         method: payload.method,
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+
+        provider: "mercadopago",
+        currency: "BRL",
+
+        platform_fee_percent: "0.00",
+        platform_fee_amount: "0.00",
+        net_amount: payload.amount,
+
+        payer_email: null,
+        payer_name: null,
+        payer_document: null,
+
+        external_reference: null,
+
+        gateway_payment_id: null,
+        gateway_checkout_id: null,
+
+        checkout_url: null,
+
+        qr_code: null,
+        qr_code_base64: null,
+
+        error_message: null,
+
+        paid_at: null,
+
+        updated_at: new Date().toISOString(),
+
+        owner_user_id: 0,
+
+        raw_payload: null,
       };
 
-      queryClient.setQueryData<PaymentListResponse>(["payments"], (current) => ({
-        items: [optimisticPayment, ...(current?.items ?? [])],
-        total: (current?.total ?? 0) + 1,
-      }));
+      query_client.setQueryData<Payment[]>(
+        ["payments", "all"],
+        (current) =>
+          appendOptimisticPayment(
+            current,
+            optimistic_payment
+          )
+      );
 
-      return { previousPayments };
+      query_client.setQueryData<Payment[]>(
+        ["payments", payload.contract_id],
+        (current) =>
+          appendOptimisticPayment(
+            current,
+            optimistic_payment
+          )
+      );
+
+      return {
+        previous_payments_all,
+        previous_payments_by_contract,
+        contract_id: payload.contract_id,
+      };
     },
+
     onError: (_error, _variables, context) => {
-      if (context?.previousPayments) {
-        queryClient.setQueryData(["payments"], context.previousPayments);
+      if (context?.previous_payments_all) {
+        query_client.setQueryData(
+          ["payments", "all"],
+          context.previous_payments_all
+        );
+      }
+
+      if (
+        context?.previous_payments_by_contract &&
+        context.contract_id
+      ) {
+        query_client.setQueryData(
+          ["payments", context.contract_id],
+          context.previous_payments_by_contract
+        );
       }
     },
-    onSuccess: (createdPayment) => {
-      queryClient.setQueryData<PaymentListResponse>(["payments"], (current) => {
+
+    onSuccess: (created_payment) => {
+      const replaceOptimistic = (
+        current: Payment[] | undefined
+      ): Payment[] => {
         if (!current) {
-          return { items: [createdPayment], total: 1 };
+          return [created_payment];
         }
 
-        return {
-          items: current.items.map((payment) =>
-            payment.id.startsWith("optimistic-") && payment.contractId === createdPayment.contractId
-              ? createdPayment
-              : payment
-          ),
-          total: current.total,
-        };
-      });
+        return current.map((payment) =>
+          String(payment.id).startsWith(
+            "optimistic-"
+          ) &&
+          payment.contract_id ===
+            created_payment.contract_id
+            ? created_payment
+            : payment
+        );
+      };
+
+      query_client.setQueryData<Payment[]>(
+        ["payments", "all"],
+        (current) => replaceOptimistic(current)
+      );
+
+      query_client.setQueryData<Payment[]>(
+        ["payments", created_payment.contract_id],
+        (current) => replaceOptimistic(current)
+      );
     },
+
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["payments", variables.contractId] });
-      queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      queryClient.invalidateQueries({ queryKey: ["contracts", variables.contractId] });
+      query_client.invalidateQueries({
+        queryKey: ["payments"],
+      });
+
+      query_client.invalidateQueries({
+        queryKey: ["payments", "all"],
+      });
+
+      query_client.invalidateQueries({
+        queryKey: [
+          "payments",
+          variables.contract_id,
+        ],
+      });
+
+      query_client.invalidateQueries({
+        queryKey: ["contracts"],
+      });
+
+      query_client.invalidateQueries({
+        queryKey: [
+          "contracts",
+          variables.contract_id,
+        ],
+      });
     },
   });
 }

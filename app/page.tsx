@@ -11,7 +11,7 @@ const highlights = [
   },
   {
     title: "Pagamentos preparados",
-    description: "Estrutura pronta para checkout, status de pagamento e páginas de retorno.",
+    description: "Estrutura pronta para checkout, retorno por status e consulta financeira.",
   },
   {
     title: "Escala sem retrabalho",
@@ -30,7 +30,7 @@ export default function HomePage() {
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
             Um frontend com casca estável, componentes reutilizáveis e organização pronta
-            para autenticação, contratos, cobranças e painel administrativo.
+            para autenticação, contratos, checkout e painel administrativo.
           </p>
 
           <div className="flex flex-wrap gap-3">

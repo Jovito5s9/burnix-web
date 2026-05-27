@@ -1,8 +1,8 @@
 import { api } from "@/services/api";
-import type { Contract, ContractListResponse } from "@/types/contract";
+import type { Contract } from "@/types/contract";
 
 export async function listContracts() {
-  const { data } = await api.get<ContractListResponse>("/contracts");
+  const { data } = await api.get<Contract[]>("/contracts");
   return data;
 }
 

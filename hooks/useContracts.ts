@@ -11,8 +11,8 @@ export function useContracts() {
   });
 
   return {
-    contracts: contractsQuery.data?.items ?? [],
-    total: contractsQuery.data?.total ?? 0,
+    contracts: contractsQuery.data ?? [],
+    total: contractsQuery.data?.length ?? 0,
     isLoading: contractsQuery.isLoading,
     isFetching: contractsQuery.isFetching,
     error: contractsQuery.error,

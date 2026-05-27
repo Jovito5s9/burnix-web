@@ -9,12 +9,6 @@ Base inicial do frontend do SaaS de inscrições e pagamentos.
 - Axios
 - TanStack Query
 
-## Bootstrap sugerido
-
-```bash
-pnpm create next-app@latest burnix-web --ts --tailwind --app --eslint --import-alias "@/*"
-```
-
 ## Instalação
 
 ```bash
@@ -31,7 +25,7 @@ pnpm lint
 pnpm typecheck
 ```
 
-## Estrutura inicial
+## Estrutura principal
 
 - `app/` para rotas, layouts e páginas
 - `components/ui/` para componentes reutilizáveis
@@ -42,6 +36,17 @@ pnpm typecheck
 - `types/` para contratos tipados do backend
 - `middleware.ts` para proteção de rotas
 
+## Fluxo integrado ao backend
+
+O protótipo cobre o fluxo principal:
+
+- autenticação
+- listagem de contratos
+- criação de checkout
+- abertura de `checkout_url`
+- retornos em `/sucesso`, `/falha` e `/pendente`
+- consulta de pagamentos
+
 ## Observação
 
-O projeto já nasce preparado para evoluir para autenticação, contratos e pagamentos sem refatoração estrutural.
+O checkout espera um endpoint configurável via `NEXT_PUBLIC_CHECKOUT_PATH` e usa `NEXT_PUBLIC_API_URL` como base do backend.

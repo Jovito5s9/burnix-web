@@ -1,8 +1,8 @@
 import { api } from "@/services/api";
-import type { Payment, PaymentCreatePayload, PaymentListResponse } from "@/types/payment";
+import type { Payment, PaymentCreatePayload } from "@/types/payment";
 
 export async function listPayments() {
-  const { data } = await api.get<PaymentListResponse>("/payments");
+  const { data } = await api.get<Payment[]>("/payments");
   return data;
 }
 
