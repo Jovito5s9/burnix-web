@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
@@ -12,17 +14,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+
 import { StatusBadge } from "@/components/feedback/status-badge";
 
 import { useContractById } from "@/hooks/useContracts";
 import { useCreateCheckout } from "@/hooks/useCheckout";
 import { usePayments } from "@/hooks/usePayments";
 
-import { buildCheckoutReturnUrls } from "@/lib/checkout";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 import type { Payment } from "@/types/payment";
@@ -31,26 +34,52 @@ type ContractDetailProps = {
   id: string;
 };
 
-export function ContractDetail({ id }: ContractDetailProps) {
+export function ContractDetail({
+  id,
+}: ContractDetailProps) {
+
+  // =========================================================
+  // HOOKS
+  // =========================================================
+
   const contractQuery = useContractById(id);
   const paymentsQuery = usePayments(id);
   const checkoutMutation = useCreateCheckout();
 
+  // =========================================================
+  // STATES
+  // =========================================================
+
   const [amount, setAmount] = useState("");
-  const [checkout_url, set_checkout_url] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const [checkout_url, set_checkout_url] =
+    useState<string | null>(null);
+
+  const [feedback, setFeedback] =
+    useState<string | null>(null);
+
+  // =========================================================
+  // DATA
+  // =========================================================
 
   const contract = contractQuery.data ?? null;
 
   const contract_payments = useMemo(
     () =>
       paymentsQuery.payments.filter(
-        (payment) => payment.contract_id === Number(id)
+        (payment) =>
+          payment.contract_id === Number(id)
       ),
     [id, paymentsQuery.payments]
   );
 
-  const suggested_amount = contract?.amount ?? 0;
+  const suggested_amount = contract
+    ? Number(contract.price)
+    : 0;
+
+  // =========================================================
+  // CREATE CHECKOUT
+  // =========================================================
 
   async function handleCreateCheckout(
     event: React.FormEvent<HTMLFormElement>
@@ -62,32 +91,46 @@ export function ContractDetail({ id }: ContractDetailProps) {
 
     if (!contract) return;
 
-    const final_amount = Number(amount || suggested_amount);
+    const final_amount = Number(
+      amount || suggested_amount
+    );
 
-    if (!Number.isFinite(final_amount) || final_amount <= 0) {
-      setFeedback("Informe um valor válido para gerar o checkout.");
+    if (
+      !Number.isFinite(final_amount) ||
+      final_amount <= 0
+    ) {
+      setFeedback(
+        "Informe um valor válido para gerar o checkout."
+      );
+
       return;
     }
 
-    if (typeof window === "undefined") return;
-
-    const return_urls = buildCheckoutReturnUrls(window.location.origin);
-
     try {
-      const result = await checkoutMutation.mutateAsync({
-        contract_id: Number(contract.id),
-        amount: final_amount,
-        ...return_urls,
-      });
+      const result =
+        await checkoutMutation.mutateAsync({
+          contract_id: Number(contract.id),
 
-      const resolved_checkout_url = result.checkout_url;
+          // TEMPORÁRIO
+          payer_email: "teste@email.com",
+          payer_name: "Teste",
+        });
+
+      const resolved_checkout_url =
+        result.checkoutUrl ||
+        result.checkout_url;
 
       if (!resolved_checkout_url) {
-        setFeedback("O backend não retornou checkout_url.");
+        setFeedback(
+          "O backend não retornou checkout_url."
+        );
+
         return;
       }
 
-      set_checkout_url(resolved_checkout_url);
+      set_checkout_url(
+        resolved_checkout_url
+      );
 
       setFeedback(
         "Checkout criado com sucesso. Abrindo a URL de pagamento."
@@ -98,7 +141,9 @@ export function ContractDetail({ id }: ContractDetailProps) {
         "_blank",
         "noopener,noreferrer"
       );
+
     } catch (error) {
+
       setFeedback(
         error instanceof Error
           ? error.message
@@ -107,13 +152,24 @@ export function ContractDetail({ id }: ContractDetailProps) {
     }
   }
 
-  if (contractQuery.isLoading || paymentsQuery.is_loading) {
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  if (
+    contractQuery.isLoading ||
+    paymentsQuery.isLoading
+  ) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <Spinner label="Carregando contrato..." />
       </div>
     );
   }
+
+  // =========================================================
+  // ERROR
+  // =========================================================
 
   if (contractQuery.error) {
     return (
@@ -124,12 +180,17 @@ export function ContractDetail({ id }: ContractDetailProps) {
         <div className="space-y-3">
           <p>
             {
-              (contractQuery.error as any)?.response?.data?.detail?.[0]
-                ?.msg ?? "Erro ao carregar contrato"
+              (contractQuery.error as any)
+                ?.response?.data?.detail?.[0]
+                ?.msg ??
+              "Erro ao carregar contrato"
             }
           </p>
 
-          <Button asChild variant="secondary">
+          <Button
+            asChild
+            variant="secondary"
+          >
             <Link href="/contracts">
               Voltar para contratos
             </Link>
@@ -138,6 +199,10 @@ export function ContractDetail({ id }: ContractDetailProps) {
       </Alert>
     );
   }
+
+  // =========================================================
+  // EMPTY
+  // =========================================================
 
   if (!contract) {
     return (
@@ -155,11 +220,20 @@ export function ContractDetail({ id }: ContractDetailProps) {
     );
   }
 
+  // =========================================================
+  // RENDER
+  // =========================================================
+
   return (
     <section className="py-8">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+
+        {/* HEADER */}
+
         <div className="mb-6 flex flex-col gap-3">
-          <Badge>Contrato</Badge>
+          <Badge>
+            Contrato
+          </Badge>
 
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
@@ -167,12 +241,13 @@ export function ContractDetail({ id }: ContractDetailProps) {
             </h1>
 
             <p className="mt-2 max-w-2xl text-slate-600">
-              Abra o detalhe, acompanhe o histórico e gere o
-              checkout com retorno para sucesso, falha ou
-              pendência.
+              Abra o detalhe, acompanhe o histórico
+              e gere o checkout.
             </p>
           </div>
         </div>
+
+        {/* FEEDBACK */}
 
         {feedback ? (
           <div className="mb-6">
@@ -185,6 +260,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
               title="Checkout"
             >
               <div className="space-y-3">
+
                 <p>{feedback}</p>
 
                 {checkout_url ? (
@@ -198,7 +274,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Abrir checkout_url
+                      Abrir checkout
                     </a>
                   </Button>
                 ) : null}
@@ -207,20 +283,29 @@ export function ContractDetail({ id }: ContractDetailProps) {
           </div>
         ) : null}
 
+        {/* CONTENT */}
+
         <div className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]">
+
+          {/* LEFT */}
+
           <div className="space-y-6">
+
+            {/* CONTRACT */}
+
             <Card>
               <CardHeader>
                 <CardTitle>
-                  {contract.customer_name}
+                  {contract.title}
                 </CardTitle>
 
                 <CardDescription>
-                  {contract.plan_name}
+                  {contract.title}
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="grid gap-4 md:grid-cols-2">
+
                 <div>
                   <p className="text-sm text-slate-500">
                     Status
@@ -240,7 +325,9 @@ export function ContractDetail({ id }: ContractDetailProps) {
                   </p>
 
                   <p className="mt-1 text-lg font-semibold text-slate-950">
-                    {formatCurrency(contract.amount)}
+                    {formatCurrency(
+                      contract.price
+                    )}
                   </p>
                 </div>
 
@@ -250,7 +337,9 @@ export function ContractDetail({ id }: ContractDetailProps) {
                   </p>
 
                   <p className="mt-1 text-sm font-medium text-slate-950">
-                    {formatDate(contract.created_at)}
+                    {formatDate(
+                      contract.created_at
+                    )}
                   </p>
                 </div>
 
@@ -263,19 +352,24 @@ export function ContractDetail({ id }: ContractDetailProps) {
                     {contract.id}
                   </p>
                 </div>
+
               </CardContent>
             </Card>
 
+            {/* PAYMENTS */}
+
             <Card>
+
               <CardHeader className="flex flex-row items-start justify-between gap-4">
+
                 <div>
                   <CardTitle>
                     Pagamentos vinculados
                   </CardTitle>
 
                   <CardDescription>
-                    Histórico financeiro relacionado a este
-                    contrato.
+                    Histórico financeiro relacionado
+                    a este contrato.
                   </CardDescription>
                 </div>
 
@@ -288,22 +382,30 @@ export function ContractDetail({ id }: ContractDetailProps) {
                     Ver pagamentos
                   </Link>
                 </Button>
+
               </CardHeader>
 
               <CardContent>
+
                 {contract_payments.length === 0 ? (
+
                   <EmptyState
                     title="Nenhum pagamento para este contrato"
-                    description="Após o checkout ser aberto e confirmado, o pagamento deverá aparecer aqui e em /payments."
+                    description="Após o checkout ser confirmado, o pagamento deverá aparecer aqui."
                   />
+
                 ) : (
+
                   <div className="space-y-3">
+
                     {contract_payments.map(
                       (payment: Payment) => (
+
                         <div
                           key={payment.id}
                           className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
                         >
+
                           <div>
                             <p className="font-medium text-slate-950">
                               {formatCurrency(
@@ -320,6 +422,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
+
                             <StatusBadge
                               kind="payment"
                               status={payment.status}
@@ -330,36 +433,47 @@ export function ContractDetail({ id }: ContractDetailProps) {
                                 ? payment.method.toUpperCase()
                                 : "—"}
                             </p>
+
                           </div>
+
                         </div>
                       )
                     )}
+
                   </div>
                 )}
+
               </CardContent>
             </Card>
           </div>
 
+          {/* RIGHT */}
+
           <div>
+
             <Card>
+
               <CardHeader>
+
                 <CardTitle>
                   Gerar checkout
                 </CardTitle>
 
                 <CardDescription>
-                  Crie o checkout a partir do contrato e
-                  redirecione para a URL retornada pelo
-                  backend.
+                  Crie um checkout do Mercado Pago.
                 </CardDescription>
+
               </CardHeader>
 
               <CardContent>
+
                 <form
                   className="space-y-4"
                   onSubmit={handleCreateCheckout}
                 >
+
                   <div className="space-y-2">
+
                     <Label htmlFor="amount">
                       Valor
                     </Label>
@@ -369,45 +483,39 @@ export function ContractDetail({ id }: ContractDetailProps) {
                       type="number"
                       step="0.01"
                       min="0"
-                      placeholder={String((suggested_amount ?? 0).toFixed(2))}
+                      placeholder={String(
+                        (
+                          suggested_amount ?? 0
+                        ).toFixed(2)
+                      )}
                       value={amount}
                       onChange={(event) =>
-                        setAmount(event.target.value)
+                        setAmount(
+                          event.target.value
+                        )
                       }
                     />
 
                     <p className="text-xs text-slate-500">
-                      Se vazio, será usado o valor do
-                      contrato.
+                      Se vazio, será usado o valor do contrato.
                     </p>
-                  </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                    O frontend enviará as URLs de retorno{" "}
-                    <span className="font-medium text-slate-950">
-                      /sucesso
-                    </span>
-                    ,{" "}
-                    <span className="font-medium text-slate-950">
-                      /falha
-                    </span>{" "}
-                    e{" "}
-                    <span className="font-medium text-slate-950">
-                      /pendente
-                    </span>
-                    .
                   </div>
 
                   <Button
                     className="w-full"
                     type="submit"
-                    disabled={checkoutMutation.isPending}
+                    disabled={
+                      checkoutMutation.isPending
+                    }
                   >
                     {checkoutMutation.isPending
                       ? "Gerando checkout..."
                       : "Gerar checkout"}
                   </Button>
+
                 </form>
+
               </CardContent>
             </Card>
           </div>

@@ -1,9 +1,7 @@
 export type CreateCheckoutPayload = {
   contract_id: number;
-  amount?: number;
-  successUrl: string;
-  failureUrl: string;
-  pendingUrl: string;
+  payer_email: string;
+  payer_name: string;
 };
 
 export type CheckoutResponse = {

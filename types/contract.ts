@@ -2,10 +2,10 @@ export type ContractStatus = "draft" | "pending" | "active" | "expired" | "cance
 
 export type Contract = {
   id: string;
-  customer_name: string;
-  plan_name: string;
+  title: string;
+  description: string;
   status: ContractStatus;
-  amount: number;
+  price: number;
   created_at: string;
 };
 

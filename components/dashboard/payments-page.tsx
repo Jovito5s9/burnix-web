@@ -40,7 +40,7 @@ export function PaymentsPage() {
     );
   }
 
-  const contractMap = new Map(contractsQuery.contracts.map((contract) => [contract.id, contract]));
+  const contractMap = new Map(contractsQuery.contracts.map((contract) => [contract.id.toString(), contract]));
 
   return (
     <section className="py-8">
@@ -84,7 +84,7 @@ export function PaymentsPage() {
             ) : (
               <div className="grid gap-4">
                 {paymentsQuery.payments.map((payment) => {
-                  const contract = contractMap.get(payment.contractId);
+                  const contract = contractMap.get(payment.contract_id.toString());
 
                   return (
                     <article
@@ -98,10 +98,9 @@ export function PaymentsPage() {
                             <StatusBadge kind="payment" status={payment.status} />
                           </div>
                           <p className="text-sm text-slate-600">
-                            Contrato {contract?.customerName ?? payment.contractId}
-                            {contract?.planName ? ` · ${contract.planName}` : ""}
+                            Contrato {contract?.title ?? payment.contract_id}
                           </p>
-                          <p className="text-xs text-slate-500">{formatDate(payment.createdAt)}</p>
+                          <p className="text-xs text-slate-500">{formatDate(payment.created_at)}</p>
                         </div>
 
                         <div className="flex flex-col gap-2 text-left lg:text-right">
@@ -109,7 +108,7 @@ export function PaymentsPage() {
                             Método: <span className="font-medium text-slate-950">{payment.method ? payment.method.toUpperCase() : "—"}</span>
                           </p>
                           <Button asChild variant="secondary" size="sm">
-                            <Link href={`/contracts/${payment.contractId}`}>Abrir contrato</Link>
+                            <Link href={`/contracts/${payment.contract_id}`}>Abrir contrato</Link>
                           </Button>
                         </div>
                       </div>

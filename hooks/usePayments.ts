@@ -36,7 +36,7 @@ export function usePayments(contract_id?: string) {
   return {
     payments,
     total: payments.length,
-    is_loading: payments_query.isLoading,
+    isLoading: payments_query.isLoading,
     is_fetching: payments_query.isFetching,
     error: payments_query.error,
     refetch: payments_query.refetch,

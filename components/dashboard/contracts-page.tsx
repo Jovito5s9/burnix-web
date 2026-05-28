@@ -79,15 +79,15 @@ export function ContractsPage() {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-semibold text-slate-950">{contract.customerName}</h3>
+                          <h3 className="text-lg font-semibold text-slate-950">{contract.title}</h3>
                           <StatusBadge kind="contract" status={contract.status} />
                         </div>
-                        <p className="text-sm text-slate-600">{contract.planName}</p>
-                        <p className="text-xs text-slate-500">Criado em {formatDate(contract.createdAt)}</p>
+                        <p className="text-sm text-slate-600">{contract.description}</p>
+                        <p className="text-xs text-slate-500">Criado em {formatDate(contract.created_at)}</p>
                       </div>
 
                       <div className="flex flex-col gap-2 text-left lg:text-right">
-                        <span className="text-xl font-semibold text-slate-950">{formatCurrency(contract.amount)}</span>
+                        <span className="text-xl font-semibold text-slate-950">{formatCurrency(contract.price)}</span>
                         <div className="flex flex-wrap gap-2 lg:justify-end">
                           <Button asChild variant="secondary" size="sm">
                             <Link href={`/contracts/${contract.id}`}>Abrir detalhe</Link>
