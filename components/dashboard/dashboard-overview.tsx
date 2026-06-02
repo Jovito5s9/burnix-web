@@ -47,7 +47,7 @@ export function DashboardOverview() {
   const paidPayments = paymentsQuery.payments.filter((payment) => payment.status === "paid").length;
   const totalRevenue = paymentsQuery.payments
     .filter((payment) => payment.status === "paid")
-    .reduce((sum, payment) => sum + payment.amount, 0);
+    .reduce((sum, payment) => sum + (Number(payment.amount)), 0);
 
   const recentContracts = contractsQuery.contracts.slice(0, 3);
   const recentPayments = paymentsQuery.payments.slice(0, 3);
@@ -132,13 +132,13 @@ export function DashboardOverview() {
                       className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
                     >
                       <div>
-                        <p className="font-medium text-slate-950">{contract.customerName}</p>
-                        <p className="text-sm text-slate-500">{contract.planName}</p>
-                        <p className="mt-1 text-xs text-slate-500">Criado em {formatDate(contract.createdAt)}</p>
+                        <p className="font-medium text-slate-950">{contract.title}</p>
+                        <p className="text-sm text-slate-500">{contract.description}</p>
+                        <p className="mt-1 text-xs text-slate-500">Criado em {formatDate(contract.created_at)}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <StatusBadge kind="contract" status={contract.status} />
-                        <span className="text-sm font-semibold text-slate-950">{formatCurrency(contract.amount)}</span>
+                        <span className="text-sm font-semibold text-slate-950">{formatCurrency(Number(contract.price))}</span>
                       </div>
                     </div>
                   ))}
@@ -171,12 +171,12 @@ export function DashboardOverview() {
                       className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
                     >
                       <div>
-                        <p className="font-medium text-slate-950">Contrato {payment.contractId}</p>
-                        <p className="text-sm text-slate-500">{formatDate(payment.createdAt)}</p>
+                        <p className="font-medium text-slate-950">Contrato {payment.contract_id}</p>
+                        <p className="text-sm text-slate-500">{formatDate(payment.created_at)}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <StatusBadge kind="payment" status={payment.status} />
-                        <span className="text-sm font-semibold text-slate-950">{formatCurrency(payment.amount)}</span>
+                        <span className="text-sm font-semibold text-slate-950">{formatCurrency(Number(payment.amount))}</span>
                       </div>
                     </div>
                   ))}

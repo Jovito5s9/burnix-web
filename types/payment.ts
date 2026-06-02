@@ -1,5 +1,11 @@
+export type PaymentStatus =
+  | "pending"
+  | "paid"
+  | "failed"
+  | "refunded";
+
 export interface Payment {
-  id: number | string;
+  id: number;
 
   owner_user_id: number;
 
@@ -9,9 +15,9 @@ export interface Payment {
 
   method: string;
 
-  status: string;
+  status: PaymentStatus;
 
-  amount: number;
+  amount: string;
 
   currency: string;
 

@@ -325,9 +325,7 @@ export function ContractDetail({
                   </p>
 
                   <p className="mt-1 text-lg font-semibold text-slate-950">
-                    {formatCurrency(
-                      contract.price
-                    )}
+                    {formatCurrency(Number(contract.price))}
                   </p>
                 </div>
 
@@ -409,7 +407,7 @@ export function ContractDetail({
                           <div>
                             <p className="font-medium text-slate-950">
                               {formatCurrency(
-                                payment.amount
+                                (Number(payment.amount))
                               )}
                             </p>
 

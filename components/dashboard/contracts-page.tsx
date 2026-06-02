@@ -87,7 +87,7 @@ export function ContractsPage() {
                       </div>
 
                       <div className="flex flex-col gap-2 text-left lg:text-right">
-                        <span className="text-xl font-semibold text-slate-950">{formatCurrency(contract.price)}</span>
+                        <span className="text-xl font-semibold text-slate-950">{formatCurrency(Number(contract.price))}</span>
                         <div className="flex flex-wrap gap-2 lg:justify-end">
                           <Button asChild variant="secondary" size="sm">
                             <Link href={`/contracts/${contract.id}`}>Abrir detalhe</Link>
