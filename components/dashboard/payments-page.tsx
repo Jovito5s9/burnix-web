@@ -94,7 +94,7 @@ export function PaymentsPage() {
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-semibold text-slate-950">{formatCurrency(payment.amount)}</h3>
+                            <h3 className="text-lg font-semibold text-slate-950">{formatCurrency(Number(payment.amount))}</h3>
                             <StatusBadge kind="payment" status={payment.status} />
                           </div>
                           <p className="text-sm text-slate-600">

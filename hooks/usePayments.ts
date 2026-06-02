@@ -77,9 +77,9 @@ export function useCreatePayment() {
         ]);
 
       const optimistic_payment: Payment = {
-        id: `optimistic-${Date.now()}`,
+        id: -Date.now(),
         contract_id: Number(payload.contract_id),
-        amount: Number(payload.amount),
+        amount: payload.amount,
         status: "pending",
         method: payload.method,
         created_at: new Date().toISOString(),
