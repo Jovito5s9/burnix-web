@@ -249,6 +249,8 @@ Atualmente o projeto encontra-se em desenvolvimento ativo, recebendo melhorias c
 
 ## Licença
 
-Este projeto está licenciado sob os termos definidos pelo proprietário do sistema.
+Projeto proprietário.
+
+O código-fonte é disponibilizado apenas para fins de demonstração técnica e portfólio.
 
 Todos os direitos reservados.
