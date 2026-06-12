@@ -43,7 +43,7 @@ export function ContractsPage() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Lista de contratos</h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Visualize contratos, status e valores para acompanhar o fluxo da SaaS.
+              Todos os contratos cadastrados na plataforma.
             </p>
           </div>
         </div>
@@ -52,7 +52,7 @@ export function ContractsPage() {
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>Contratos cadastrados</CardTitle>
-              <CardDescription>{total} registros retornados pela API.</CardDescription>
+              <CardDescription>{total} contratos encontrados.</CardDescription>
             </div>
             <Button asChild variant="secondary" size="sm">
               <Link href="/dashboard">Ir ao dashboard</Link>

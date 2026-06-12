@@ -44,7 +44,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="hidden sm:inline-flex">
-            MVP base
+            MVP
           </Badge>
           <Button variant="secondary" asChild>
             <Link href="/login">Entrar</Link>

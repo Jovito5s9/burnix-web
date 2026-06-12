@@ -60,7 +60,7 @@ export function DashboardOverview() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Visão geral</h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Acompanhe contratos, pagamentos e os próximos passos do fluxo SaaS.
+              Visão geral do desempenho e atividade do seu negócio.
             </p>
           </div>
         </div>
@@ -92,7 +92,7 @@ export function DashboardOverview() {
               <CardTitle>{formatCurrency(totalRevenue)}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              Base para acompanhar faturamento e conversão.
+              Receita total de pagamentos confirmados.
             </CardContent>
           </Card>
 
@@ -112,7 +112,9 @@ export function DashboardOverview() {
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Contratos recentes</CardTitle>
-                <CardDescription>Últimos contratos carregados pela API.</CardDescription>
+                <CardDescription>
+                  Últimos contratos criados na plataforma.
+                </CardDescription>
               </div>
               <Button asChild variant="secondary" size="sm">
                 <Link href="/contracts">Ver todos</Link>
@@ -151,7 +153,9 @@ export function DashboardOverview() {
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Pagamentos recentes</CardTitle>
-                <CardDescription>Eventos financeiros mais recentes.</CardDescription>
+                <CardDescription>
+                  Eventos financeiros mais recentes.
+                </CardDescription>
               </div>
               <Button asChild variant="secondary" size="sm">
                 <Link href="/payments">Ver todos</Link>

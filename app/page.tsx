@@ -7,15 +7,15 @@ import { Badge } from "@/components/ui/badge";
 const highlights = [
   {
     title: "Inscrições organizadas",
-    description: "Base pensada para fluxo de cadastro, confirmação e acompanhamento.",
+    description: "Gerencie eventos, inscrições e participantes com facilidade usando uma estrutura clara e intuitiva.",
   },
   {
     title: "Pagamentos preparados",
-    description: "Estrutura pronta para checkout, retorno por status e consulta financeira.",
+    description: "Fluxo de checkout e retorno por status para gerenciar pagamentos de forma eficiente.",
   },
   {
     title: "Escala sem retrabalho",
-    description: "Separação clara entre UI, serviços, hooks e tipagem compartilhada.",
+    description: "Estrutura escalável que permite adicionar novas funcionalidades sem precisar reescrever o código existente.",
   },
 ];
 
@@ -26,15 +26,15 @@ export default function HomePage() {
         <div className="max-w-3xl space-y-6">
           <Badge>Burnix Web</Badge>
           <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            Base inicial para o SaaS de inscrições e pagamentos.
+            Estrutura de inscrições e pagamentos para eventos
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            Um frontend com casca estável, componentes reutilizáveis e organização pronta
-            para autenticação, contratos, checkout e painel administrativo.
+            Crie eventos, gerencie inscrições e acompanhe pagamentos com esta estrutura pronta para ser personalizada.
+            Inclui autenticação, gerenciamento de contratos, fluxo de checkout e painel administrativo básico
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <Button asChild>
+            <Button variant="secondary" asChild>
               <Link href="/login">Entrar</Link>
             </Button>
             <Button variant="secondary" asChild>
@@ -52,7 +52,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-600">
-                  Estrutura simples agora, pronta para ganhar complexidade depois.
+                  Esta estrutura é ideal para organizadores de eventos que precisam de uma solução rápida e personalizável.
                 </p>
               </CardContent>
             </Card>

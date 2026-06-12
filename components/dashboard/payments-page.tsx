@@ -50,7 +50,7 @@ export function PaymentsPage() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Histórico de pagamentos</h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Veja status, valores e vínculo com contratos para acompanhar o fluxo financeiro.
+              Acompanhe o histórico de pagamentos, status e detalhes de cada transação.
             </p>
           </div>
         </div>
@@ -59,7 +59,7 @@ export function PaymentsPage() {
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>Pagamentos registrados</CardTitle>
-              <CardDescription>{paymentsQuery.total} eventos carregados da API.</CardDescription>
+              <CardDescription>{paymentsQuery.total} pagamentos encontrados.</CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="secondary" size="sm">
