@@ -64,7 +64,7 @@ export function ContractsPage() {
                 title="Nenhum contrato encontrado"
                 description="O frontend já está pronto para exibir a listagem assim que a API retornar dados."
                 action={
-                  <Button asChild>
+                  <Button variant="secondary" asChild>
                     <Link href="/dashboard">Voltar ao dashboard</Link>
                   </Button>
                 }

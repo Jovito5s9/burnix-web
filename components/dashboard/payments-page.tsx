@@ -76,7 +76,7 @@ export function PaymentsPage() {
                 title="Nenhum pagamento encontrado"
                 description="Assim que o backend devolver cobranças, elas aparecerão aqui."
                 action={
-                  <Button asChild>
+                  <Button variant="secondary" asChild>
                     <Link href="/contracts">Ir para contratos</Link>
                   </Button>
                 }
