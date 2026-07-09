@@ -321,3 +321,9 @@ Inscrição pública
   ↓
 Geração de cobrança Pix/OpenPix da inscrição
 ```
+
+## Observação sobre datas de eventos
+
+Os campos `start_date`, `end_date` e `registration_deadline` do formulário de criação de eventos são enviados como data/hora local no formato `YYYY-MM-DDTHH:mm:ss`, sem conversão para UTC e sem sufixo `Z`. Isso evita o deslocamento automático de fuso horário causado por `Date.prototype.toISOString()` em campos `datetime-local`.
+
+O frontend também valida antes do envio que a data final seja posterior ao início e que o prazo de inscrição não seja posterior ao início do evento, evitando respostas `422` previsíveis do backend.

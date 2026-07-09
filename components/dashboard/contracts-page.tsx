@@ -12,24 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { useContracts, useCreateContract } from "@/hooks/useContracts";
+import { toApiLocalDateTime, compareLocalDateTimes } from "@/lib/datetime";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
 import { getErrorMessage } from "@/lib/get-error-message";
 import type { ContractCreatePayload, ContractStatus } from "@/types/contract";
 
 const PAGE_SIZE = 20;
-
-function toNullableIsoDate(value: FormDataEntryValue | null) {
-  if (typeof value !== "string" || !value) {
-    return null;
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toISOString();
-}
 
 function getNullableString(value: FormDataEntryValue | null) {
   if (typeof value !== "string") {
@@ -76,6 +64,24 @@ export function ContractsPage() {
       return;
     }
 
+    const startDate = toApiLocalDateTime(formData.get("start_date"));
+    const endDate = toApiLocalDateTime(formData.get("end_date"));
+    const registrationDeadline = toApiLocalDateTime(
+      formData.get("registration_deadline")
+    );
+
+    const endVsStart = compareLocalDateTimes(endDate, startDate);
+    if (endVsStart !== null && endVsStart <= 0) {
+      setFeedback("A data de fim precisa ser posterior à data de início do evento.");
+      return;
+    }
+
+    const deadlineVsStart = compareLocalDateTimes(registrationDeadline, startDate);
+    if (deadlineVsStart !== null && deadlineVsStart > 0) {
+      setFeedback("O prazo de inscrição não pode ser posterior ao início do evento.");
+      return;
+    }
+
     const payload: ContractCreatePayload = {
       title,
       description: getNullableString(formData.get("description")),
@@ -83,9 +89,9 @@ export function ContractsPage() {
       price,
       currency: getNullableString(formData.get("currency")) ?? "BRL",
       capacity: getNullableNumber(formData.get("capacity")),
-      start_date: toNullableIsoDate(formData.get("start_date")),
-      end_date: toNullableIsoDate(formData.get("end_date")),
-      registration_deadline: toNullableIsoDate(formData.get("registration_deadline")),
+      start_date: startDate,
+      end_date: endDate,
+      registration_deadline: registrationDeadline,
       payment_config: null,
     };
 
@@ -212,6 +218,9 @@ export function ContractsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Início</Label>
                   <Input id="start_date" name="start_date" type="datetime-local" />
+                  <p className="text-xs text-slate-500">
+                    Enviado ao backend como data local, sem conversão para UTC e sem sufixo Z.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -222,6 +231,9 @@ export function ContractsPage() {
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="registration_deadline">Prazo de inscrição</Label>
                   <Input id="registration_deadline" name="registration_deadline" type="datetime-local" />
+                  <p className="text-xs text-slate-500">
+                    Deve ser igual ou anterior ao início do evento.
+                  </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 md:col-span-2">
