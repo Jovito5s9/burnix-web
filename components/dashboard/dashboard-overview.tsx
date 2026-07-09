@@ -13,7 +13,7 @@ import { usePayments } from "@/hooks/usePayments";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export function DashboardOverview() {
-  const contractsQuery = useContracts();
+  const contractsQuery = useContracts({ skip: 0, limit: 50 });
   const paymentsQuery = usePayments();
 
   if (contractsQuery.isLoading || paymentsQuery.isLoading) {
@@ -42,12 +42,12 @@ export function DashboardOverview() {
     );
   }
 
-  const activeContracts = contractsQuery.contracts.filter((contract) => contract.status === "active").length;
+  const publishedEvents = contractsQuery.contracts.filter((contract) => contract.status === "published").length;
   const pendingPayments = paymentsQuery.payments.filter((payment) => payment.status === "pending").length;
   const paidPayments = paymentsQuery.payments.filter((payment) => payment.status === "paid").length;
   const totalRevenue = paymentsQuery.payments
     .filter((payment) => payment.status === "paid")
-    .reduce((sum, payment) => sum + (Number(payment.amount)), 0);
+    .reduce((sum, payment) => sum + Number(payment.amount), 0);
 
   const recentContracts = contractsQuery.contracts.slice(0, 3);
   const recentPayments = paymentsQuery.payments.slice(0, 3);
@@ -60,7 +60,7 @@ export function DashboardOverview() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Visão geral</h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Visão geral do desempenho e atividade do seu negócio.
+              Acompanhe eventos, inscrições e pagamentos processados pelo backend Burnix.
             </p>
           </div>
         </div>
@@ -68,11 +68,11 @@ export function DashboardOverview() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardHeader>
-              <CardDescription>Contratos totais</CardDescription>
+              <CardDescription>Eventos totais</CardDescription>
               <CardTitle>{contractsQuery.total}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              {activeContracts} contratos ativos agora.
+              {publishedEvents} eventos publicados agora.
             </CardContent>
           </Card>
 
@@ -98,11 +98,11 @@ export function DashboardOverview() {
 
           <Card>
             <CardHeader>
-              <CardDescription>Checkout em aberto</CardDescription>
+              <CardDescription>Cobranças em aberto</CardDescription>
               <CardTitle>{pendingPayments}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              Fluxos em aberto aguardando confirmação.
+              Fluxos aguardando confirmação do pagamento.
             </CardContent>
           </Card>
         </div>
@@ -111,38 +111,42 @@ export function DashboardOverview() {
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
-                <CardTitle>Contratos recentes</CardTitle>
-                <CardDescription>
-                  Últimos contratos criados na plataforma.
-                </CardDescription>
+                <CardTitle>Eventos recentes</CardTitle>
+                <CardDescription>Últimos eventos cadastrados na plataforma.</CardDescription>
               </div>
               <Button asChild variant="secondary" size="sm">
-                <Link href="/contracts">Ver todos</Link>
+                <Link href="/contracts">Ver eventos</Link>
               </Button>
             </CardHeader>
             <CardContent>
               {recentContracts.length === 0 ? (
                 <EmptyState
-                  title="Nenhum contrato disponível"
-                  description="Quando a API responder, os contratos aparecerão aqui."
+                  title="Nenhum evento encontrado"
+                  description="Crie o primeiro evento para começar a receber inscrições."
+                  action={
+                    <Button variant="secondary" asChild>
+                      <Link href="/contracts">Ir para eventos</Link>
+                    </Button>
+                  }
                 />
               ) : (
                 <div className="space-y-3">
                   {recentContracts.map((contract) => (
-                    <div
+                    <Link
                       key={contract.id}
-                      className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      href={`/contracts/${contract.id}`}
+                      className="block rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
                     >
-                      <div>
-                        <p className="font-medium text-slate-950">{contract.title}</p>
-                        <p className="text-sm text-slate-500">{contract.description}</p>
-                        <p className="mt-1 text-xs text-slate-500">Criado em {formatDate(contract.created_at)}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-medium text-slate-950">{contract.title}</p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            Criado em {formatDate(contract.created_at)}
+                          </p>
+                        </div>
                         <StatusBadge kind="contract" status={contract.status} />
-                        <span className="text-sm font-semibold text-slate-950">{formatCurrency(Number(contract.price))}</span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -153,36 +157,38 @@ export function DashboardOverview() {
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Pagamentos recentes</CardTitle>
-                <CardDescription>
-                  Eventos financeiros mais recentes.
-                </CardDescription>
+                <CardDescription>Últimas transações recebidas pelo backend.</CardDescription>
               </div>
               <Button asChild variant="secondary" size="sm">
-                <Link href="/payments">Ver todos</Link>
+                <Link href="/payments">Ver pagamentos</Link>
               </Button>
             </CardHeader>
             <CardContent>
               {recentPayments.length === 0 ? (
                 <EmptyState
-                  title="Nenhum pagamento disponível"
-                  description="Assim que houver cobranças na API, elas aparecerão aqui."
+                  title="Nenhum pagamento encontrado"
+                  description="As cobranças aparecerão aqui depois de geradas."
                 />
               ) : (
                 <div className="space-y-3">
                   {recentPayments.map((payment) => (
-                    <div
+                    <Link
                       key={payment.id}
-                      className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      href={`/contracts/${payment.contract_id}`}
+                      className="block rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
                     >
-                      <div>
-                        <p className="font-medium text-slate-950">Contrato {payment.contract_id}</p>
-                        <p className="text-sm text-slate-500">{formatDate(payment.created_at)}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-medium text-slate-950">
+                            {formatCurrency(Number(payment.amount), payment.currency)}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            Criado em {formatDate(payment.created_at)}
+                          </p>
+                        </div>
                         <StatusBadge kind="payment" status={payment.status} />
-                        <span className="text-sm font-semibold text-slate-950">{formatCurrency(Number(payment.amount))}</span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

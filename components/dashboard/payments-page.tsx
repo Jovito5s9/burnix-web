@@ -63,7 +63,7 @@ export function PaymentsPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="secondary" size="sm">
-                <Link href="/contracts">Ver contratos</Link>
+                <Link href="/contracts">Ver eventos</Link>
               </Button>
               <Button asChild variant="secondary" size="sm">
                 <Link href="/dashboard">Ir ao dashboard</Link>
@@ -77,7 +77,7 @@ export function PaymentsPage() {
                 description="Assim que o backend devolver cobranças, elas aparecerão aqui."
                 action={
                   <Button variant="secondary" asChild>
-                    <Link href="/contracts">Ir para contratos</Link>
+                    <Link href="/contracts">Ir para eventos</Link>
                   </Button>
                 }
               />
@@ -98,7 +98,7 @@ export function PaymentsPage() {
                             <StatusBadge kind="payment" status={payment.status} />
                           </div>
                           <p className="text-sm text-slate-600">
-                            Contrato {contract?.title ?? payment.contract_id}
+                            Evento {contract?.title ?? payment.contract_id}
                           </p>
                           <p className="text-xs text-slate-500">{formatDate(payment.created_at)}</p>
                         </div>
@@ -108,7 +108,7 @@ export function PaymentsPage() {
                             Método: <span className="font-medium text-slate-950">{payment.method ? payment.method.toUpperCase() : "—"}</span>
                           </p>
                           <Button asChild variant="secondary" size="sm">
-                            <Link href={`/contracts/${payment.contract_id}`}>Abrir contrato</Link>
+                            <Link href={`/contracts/${payment.contract_id}`}>Abrir evento</Link>
                           </Button>
                         </div>
                       </div>

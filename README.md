@@ -25,20 +25,39 @@ Controle de acesso ao sistema
 
 ### Gestão de Eventos
 
-Listagem de eventos
+Listagem paginada de eventos usando `skip` e `limit`
 
-Visualização de detalhes
+Criação de eventos pelo endpoint `POST /contracts/`
 
-Consulta de status
+Visualização de detalhes do evento
+
+Consulta dos status atuais do backend: `draft`, `published`, `closed` e `cancelled`
+
+Exibição de capacidade, início, fim, prazo de inscrição, moeda e preço
+
+Tratamento de `client_id` como campo legado e opcional
 
 
-### Pagamentos
+### Inscrições por Evento
+
+Consulta de inscrições vinculadas ao evento usando:
+
+```txt
+GET /contracts/{contract_id}/registrations
+```
+
+As páginas públicas de inscrição ainda serão implementadas nas próximas etapas.
+
+
+### Pagamentos por Evento
+
+Consulta de pagamentos vinculados ao evento usando:
+
+```txt
+GET /contracts/{contract_id}/payments
+```
 
 Geração de cobranças Pix/OpenPix
-
-Acompanhamento de pagamentos
-
-Fluxo de pagamento via Pix
 
 Compatibilidade com rota legada de checkout do backend
 
@@ -61,6 +80,8 @@ Consumo de endpoints REST sem prefixo global `/api/v1`
 Tratamento de erros centralizado, incluindo erros `422` do FastAPI/Pydantic e validações de formulário dinâmico
 
 Gerenciamento de cache com React Query
+
+Mutations para criar, atualizar e excluir eventos
 
 
 ---
@@ -112,9 +133,13 @@ A API atual expõe as rotas diretamente na raiz do host, por exemplo:
 /auth/login
 /auth/register
 /contracts/
+/contracts/{contract_id}/registrations
+/contracts/{contract_id}/payments
 /payments/
 /public/contracts/{contract_id}
 ```
+
+> Observação: o backend ainda usa o recurso técnico `Contract`, mas o frontend apresenta esse recurso como **Evento** para o usuário final. Por isso a rota continua `/contracts`, enquanto os textos da interface usam “Eventos”.
 
 ---
 
@@ -253,34 +278,10 @@ Login
   ↓
 Dashboard
   ↓
-Eventos / Contracts
+Eventos (`/contracts`)
   ↓
-Gerar cobrança Pix/OpenPix
+Detalhe do evento
   ↓
-Acompanhar pagamento
+Inscrições e pagamentos vinculados ao evento
   ↓
-Retorno ou confirmação via backend/webhook
-
----
-
-## Segurança
-
-O frontend não armazena credenciais sensíveis nem executa regras críticas de negócio.
-
-Toda lógica financeira, validações de pagamento, webhooks e processamento de transações são tratados exclusivamente pelo backend da plataforma.
-
----
-
-## Status do Projeto
-
-Atualmente o projeto encontra-se em desenvolvimento ativo, recebendo melhorias contínuas de arquitetura, experiência do usuário e integração com os serviços da plataforma Burnix.
-
----
-
-## Licença
-
-Projeto proprietário.
-
-O código-fonte é disponibilizado apenas para fins de demonstração técnica e portfólio.
-
-Todos os direitos reservados.
+Geração de cobrança Pix/OpenPix ou checkout legado

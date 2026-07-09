@@ -2,6 +2,8 @@ export type PaymentStatus =
   | "pending"
   | "paid"
   | "failed"
+  | "expired"
+  | "error"
   | "refunded";
 
 export interface Payment {
@@ -11,9 +13,13 @@ export interface Payment {
 
   contract_id: number;
 
+  client_id?: number | null;
+
   provider: string;
 
   method: string;
+
+  payment_method?: string | null;
 
   status: PaymentStatus;
 
@@ -59,7 +65,11 @@ export interface Payment {
 export interface PaymentCreatePayload {
   contract_id: number;
 
+  client_id?: number | null;
+
   method: string;
+
+  payment_method?: string | null;
 
   amount: string;
 }

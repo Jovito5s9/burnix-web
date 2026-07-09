@@ -8,7 +8,7 @@ export const navLinks = [
 
 export const dashboardNavLinks = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Contratos", href: "/contracts" },
+  { label: "Eventos", href: "/contracts" },
   { label: "Pagamentos", href: "/payments" },
   { label: "Configurações", href: "/settings" },
 ] as const;

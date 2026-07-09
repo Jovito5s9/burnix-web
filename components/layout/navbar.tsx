@@ -26,7 +26,7 @@ export function Navbar() {
           </span>
           <div className="leading-tight">
             <p className="font-semibold text-slate-950">{APP_NAME}</p>
-            <p className="text-xs text-slate-500">Inscrições e pagamentos</p>
+            <p className="text-xs text-slate-500">Eventos, inscrições e pagamentos</p>
           </div>
         </Link>
 

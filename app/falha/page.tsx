@@ -32,7 +32,7 @@ export default function Page({ searchParams }: PageProps) {
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/contracts">Revisar contratos</Link>
+            <Link href="/contracts">Revisar eventos</Link>
           </Button>
           <Button variant="secondary" asChild>
             <Link href="/dashboard">Ir para o dashboard</Link>

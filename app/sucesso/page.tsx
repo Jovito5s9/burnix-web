@@ -25,7 +25,7 @@ export default function Page({ searchParams }: PageProps) {
             {paymentId || contractId || checkoutId ? (
               <p className="text-sm text-green-900/80">
                 {paymentId ? `Pagamento: ${paymentId}. ` : ""}
-                {contractId ? `Contrato: ${contractId}. ` : ""}
+                {contractId ? `Evento: ${contractId}. ` : ""}
                 {checkoutId ? `Checkout: ${checkoutId}.` : ""}
               </p>
             ) : null}

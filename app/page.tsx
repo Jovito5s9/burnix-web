@@ -6,16 +6,16 @@ import { Badge } from "@/components/ui/badge";
 
 const highlights = [
   {
-    title: "Inscrições organizadas",
-    description: "Gerencie eventos, inscrições e participantes com facilidade usando uma estrutura clara e intuitiva.",
+    title: "Eventos organizados",
+    description: "Crie eventos, acompanhe capacidade, datas, prazo de inscrição e status de publicação.",
+  },
+  {
+    title: "Inscrições e participantes",
+    description: "Use a estrutura atual do backend para conectar eventos, inscrições e pagamentos em um único fluxo.",
   },
   {
     title: "Pagamentos preparados",
-    description: "Fluxo de checkout e retorno por status para gerenciar pagamentos de forma eficiente.",
-  },
-  {
-    title: "Escala sem retrabalho",
-    description: "Estrutura escalável que permite adicionar novas funcionalidades sem precisar reescrever o código existente.",
+    description: "Acompanhe cobranças vinculadas ao evento e mantenha compatibilidade com as rotas atuais do backend.",
   },
 ];
 
@@ -26,11 +26,11 @@ export default function HomePage() {
         <div className="max-w-3xl space-y-6">
           <Badge>Burnix Web</Badge>
           <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-            Estrutura de inscrições e pagamentos para eventos
+            Gestão de eventos, inscrições e pagamentos
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            Crie eventos, gerencie inscrições e acompanhe pagamentos com esta estrutura pronta para ser personalizada.
-            Inclui autenticação, gerenciamento de contratos, fluxo de checkout e painel administrativo básico
+            Crie eventos, gerencie inscrições e acompanhe pagamentos com uma interface alinhada ao backend atual do Burnix.
+            A API ainda usa rotas de contratos, como `/contracts/`, mas o produto agora trata esses registros como eventos.
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -52,7 +52,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-600">
-                  Esta estrutura é ideal para organizadores de eventos que precisam de uma solução rápida e personalizável.
+                  Estrutura ideal para organizadores que precisam operar eventos e evoluir o fluxo público de inscrição.
                 </p>
               </CardContent>
             </Card>
