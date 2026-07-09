@@ -50,7 +50,6 @@ export function getPaymentStatusLabel(status: PaymentStatus) {
   const labels: Record<PaymentStatus, string> = {
     pending: "Pendente",
     paid: "Pago",
-    failed: "Falhou",
     expired: "Expirado",
     error: "Erro",
     refunded: "Estornado",

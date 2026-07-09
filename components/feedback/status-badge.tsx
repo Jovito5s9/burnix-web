@@ -38,7 +38,6 @@ export function StatusBadge(props: StatusBadgeProps) {
   const paymentClassMap: Record<PaymentStatus, string> = {
     pending: "bg-amber-100 text-amber-800",
     paid: "bg-green-100 text-green-700",
-    failed: "bg-red-100 text-red-700",
     expired: "bg-slate-100 text-slate-700",
     error: "bg-red-100 text-red-700",
     refunded: "bg-slate-100 text-slate-700",

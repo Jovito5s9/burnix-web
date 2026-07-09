@@ -4,19 +4,27 @@ import Link from "next/link";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusBadge } from "@/components/feedback/status-badge";
+import { useClients } from "@/hooks/useClients";
 import { useContracts } from "@/hooks/useContracts";
 import { usePayments } from "@/hooks/usePayments";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export function DashboardOverview() {
   const contractsQuery = useContracts({ skip: 0, limit: 50 });
-  const paymentsQuery = usePayments();
+  const paymentsQuery = usePayments({ skip: 0, limit: 50 });
+  const clientsQuery = useClients({ skip: 0, limit: 100 });
 
-  if (contractsQuery.isLoading || paymentsQuery.isLoading) {
+  if (contractsQuery.isLoading || paymentsQuery.isLoading || clientsQuery.isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <Spinner label="Carregando visão geral..." />
@@ -24,10 +32,11 @@ export function DashboardOverview() {
     );
   }
 
-  if (contractsQuery.error || paymentsQuery.error) {
+  if (contractsQuery.error || paymentsQuery.error || clientsQuery.error) {
     const message =
       contractsQuery.error?.message ??
       paymentsQuery.error?.message ??
+      clientsQuery.error?.message ??
       "Não foi possível carregar o dashboard.";
 
     return (
@@ -42,12 +51,25 @@ export function DashboardOverview() {
     );
   }
 
-  const publishedEvents = contractsQuery.contracts.filter((contract) => contract.status === "published").length;
-  const pendingPayments = paymentsQuery.payments.filter((payment) => payment.status === "pending").length;
-  const paidPayments = paymentsQuery.payments.filter((payment) => payment.status === "paid").length;
+  const publishedEvents = contractsQuery.contracts.filter(
+    (contract) => contract.status === "published"
+  ).length;
+  const pendingPayments = paymentsQuery.payments.filter(
+    (payment) => payment.status === "pending"
+  ).length;
+  const paidPayments = paymentsQuery.payments.filter(
+    (payment) => payment.status === "paid"
+  ).length;
   const totalRevenue = paymentsQuery.payments
     .filter((payment) => payment.status === "paid")
     .reduce((sum, payment) => sum + Number(payment.amount), 0);
+  const totalRegistrations = clientsQuery.clients.length;
+  const confirmedRegistrations = clientsQuery.clients.filter(
+    (client) => client.registration_status === "confirmed"
+  ).length;
+  const pendingRegistrations = clientsQuery.clients.filter(
+    (client) => client.registration_status === "pending_payment"
+  ).length;
 
   const recentContracts = contractsQuery.contracts.slice(0, 3);
   const recentPayments = paymentsQuery.payments.slice(0, 3);
@@ -60,7 +82,7 @@ export function DashboardOverview() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Visão geral</h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Acompanhe eventos, inscrições e pagamentos processados pelo backend Burnix.
+              Acompanhe eventos, inscrições, participantes e pagamentos Pix/OpenPix processados pelo backend Burnix.
             </p>
           </div>
         </div>
@@ -78,11 +100,21 @@ export function DashboardOverview() {
 
           <Card>
             <CardHeader>
-              <CardDescription>Pagamentos pagos</CardDescription>
-              <CardTitle>{paidPayments}</CardTitle>
+              <CardDescription>Inscrições totais</CardDescription>
+              <CardTitle>{totalRegistrations}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              {pendingPayments} pagamentos ainda pendentes.
+              Participantes/clients retornados por `/clients/`.
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Inscrições confirmadas</CardDescription>
+              <CardTitle>{confirmedRegistrations}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-slate-600">
+              {pendingRegistrations} inscrições aguardando pagamento.
             </CardContent>
           </Card>
 
@@ -92,17 +124,7 @@ export function DashboardOverview() {
               <CardTitle>{formatCurrency(totalRevenue)}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              Receita total de pagamentos confirmados.
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardDescription>Cobranças em aberto</CardDescription>
-              <CardTitle>{pendingPayments}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-600">
-              Fluxos aguardando confirmação do pagamento.
+              {paidPayments} pagamentos pagos e {pendingPayments} pendentes.
             </CardContent>
           </Card>
         </div>
@@ -157,7 +179,7 @@ export function DashboardOverview() {
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Pagamentos recentes</CardTitle>
-                <CardDescription>Últimas transações recebidas pelo backend.</CardDescription>
+                <CardDescription>Últimas transações Pix/OpenPix recebidas pelo backend.</CardDescription>
               </div>
               <Button asChild variant="secondary" size="sm">
                 <Link href="/payments">Ver pagamentos</Link>
@@ -167,7 +189,7 @@ export function DashboardOverview() {
               {recentPayments.length === 0 ? (
                 <EmptyState
                   title="Nenhum pagamento encontrado"
-                  description="As cobranças aparecerão aqui depois de geradas."
+                  description="As cobranças Pix/OpenPix aparecerão aqui depois de geradas."
                 />
               ) : (
                 <div className="space-y-3">
@@ -183,6 +205,9 @@ export function DashboardOverview() {
                             {formatCurrency(Number(payment.amount), payment.currency)}
                           </p>
                           <p className="mt-1 text-sm text-slate-500">
+                            {payment.payer_name ?? payment.payer_email ?? "Pagador não informado"}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
                             Criado em {formatDate(payment.created_at)}
                           </p>
                         </div>

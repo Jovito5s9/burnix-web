@@ -14,7 +14,7 @@ export function DashboardShell({
         <Container className="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold text-slate-950">{APP_NAME}</p>
-            <p className="text-sm text-slate-500">Painel de eventos</p>
+            <p className="text-sm text-slate-500">Painel de eventos, inscrições e Pix</p>
           </div>
           <nav className="flex flex-wrap gap-3">
             {dashboardNavLinks.map((item) => (

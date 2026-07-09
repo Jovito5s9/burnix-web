@@ -26,3 +26,13 @@ export type Registration = {
   created_at: string;
   updated_at: string;
 };
+
+export type PublicRegistrationPayload = {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  document?: string | null;
+  sex?: string | null;
+  age?: number | null;
+  extra_fields?: Record<string, unknown> | null;
+};

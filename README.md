@@ -1,6 +1,6 @@
 # Burnix Web
 
-Frontend oficial do Burnix, uma plataforma SaaS para gestão de eventos, inscrições, pagamentos Pix e cobranças.
+Frontend oficial do Burnix, uma plataforma SaaS para gestão de eventos, inscrições, pagamentos Pix/OpenPix e cobranças.
 
 O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e segura para gerenciamento de eventos, acompanhamento de inscrições e visualização de transações financeiras processadas pelo backend Burnix.
 
@@ -12,77 +12,57 @@ O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e seg
 
 ### Autenticação
 
-Login de usuários
-
-Cadastro de usuários
-
-Persistência de sessão com JWT Bearer
-
-Proteção de rotas privadas
-
-Controle de acesso ao sistema
-
+- Login de usuários
+- Cadastro de usuários
+- Persistência de sessão com JWT Bearer
+- Proteção de rotas privadas
+- Controle de acesso ao sistema
 
 ### Gestão de Eventos
 
-Listagem paginada de eventos usando `skip` e `limit`
+- Listagem paginada de eventos usando `skip` e `limit`
+- Criação de eventos pelo endpoint `POST /contracts/`
+- Visualização de detalhes do evento
+- Consulta dos status atuais do backend: `draft`, `published`, `closed` e `cancelled`
+- Exibição de capacidade, início, fim, prazo de inscrição, moeda e preço
+- Tratamento de `client_id` como campo legado e opcional
 
-Criação de eventos pelo endpoint `POST /contracts/`
+### Inscrições / Participantes
 
-Visualização de detalhes do evento
-
-Consulta dos status atuais do backend: `draft`, `published`, `closed` e `cancelled`
-
-Exibição de capacidade, início, fim, prazo de inscrição, moeda e preço
-
-Tratamento de `client_id` como campo legado e opcional
-
-
-### Inscrições por Evento
-
-Consulta de inscrições vinculadas ao evento usando:
-
-```txt
-GET /contracts/{contract_id}/registrations
-```
+- Consulta de inscrições vinculadas ao evento usando `GET /contracts/{contract_id}/registrations`
+- Camada interna para clientes/inscrições usando `/clients/`
+- Componentes de listagem e detalhe de inscrições no painel do evento
+- Exibição de nome, e-mail, telefone, documento, status de inscrição, status de pagamento e campos extras
+- Botão para gerar Pix/OpenPix de uma inscrição usando `POST /payments/registrations/{client_id}/pix`
 
 As páginas públicas de inscrição ainda serão implementadas nas próximas etapas.
 
+### Pagamentos Pix/OpenPix
 
-### Pagamentos por Evento
-
-Consulta de pagamentos vinculados ao evento usando:
-
-```txt
-GET /contracts/{contract_id}/payments
-```
-
-Geração de cobranças Pix/OpenPix
-
-Compatibilidade com rota legada de checkout do backend
-
+- Consulta global de pagamentos usando `GET /payments/`
+- Consulta de pagamento por ID usando `GET /payments/{payment_id}`
+- Consulta de pagamentos vinculados ao evento usando `GET /contracts/{contract_id}/payments`
+- Geração de cobrança Pix/OpenPix para evento usando `POST /payments/contracts/{contract_id}/pix`
+- Geração de cobrança Pix/OpenPix para inscrição usando `POST /payments/registrations/{client_id}/pix`
+- Compatibilidade técnica com a rota legada `POST /payments/contracts/{contract_id}/checkout`
+- Exibição de checkout URL, QR Code, código Pix copia e cola, provider, status detalhado, taxa da plataforma e valor líquido
 
 ### Retornos de Pagamento
 
-Página de sucesso
+- Página de sucesso
+- Página de falha
+- Página de pagamento pendente
 
-Página de falha
-
-Página de pagamento pendente
-
+Essas páginas continuam disponíveis para compatibilidade, mas a confirmação real do pagamento deve ser acompanhada pelos endpoints de pagamentos do backend e pelos webhooks OpenPix.
 
 ### Integração com API
 
-Comunicação com backend próprio
-
-Consumo de endpoints REST sem prefixo global `/api/v1`
-
-Tratamento de erros centralizado, incluindo erros `422` do FastAPI/Pydantic e validações de formulário dinâmico
-
-Gerenciamento de cache com React Query
-
-Mutations para criar, atualizar e excluir eventos
-
+- Comunicação com backend próprio
+- Consumo de endpoints REST sem prefixo global `/api/v1`
+- Tratamento de erros centralizado, incluindo erros `422` do FastAPI/Pydantic e validações de formulário dinâmico
+- Gerenciamento de cache com React Query
+- Mutations para criar, atualizar e excluir eventos
+- Mutations específicas para Pix/OpenPix de evento e de inscrição
 
 ---
 
@@ -90,24 +70,18 @@ Mutations para criar, atualizar e excluir eventos
 
 ### Frontend
 
-Next.js (App Router)
-
-TypeScript
-
-Tailwind CSS
-
+- Next.js com App Router
+- TypeScript
+- Tailwind CSS
 
 ### Gerenciamento de Estado e Dados
 
-TanStack Query
-
-Axios
-
+- TanStack Query
+- Axios
 
 ### Infraestrutura
 
-Vercel
-
+- Vercel
 
 ---
 
@@ -135,7 +109,10 @@ A API atual expõe as rotas diretamente na raiz do host, por exemplo:
 /contracts/
 /contracts/{contract_id}/registrations
 /contracts/{contract_id}/payments
+/clients/
 /payments/
+/payments/contracts/{contract_id}/pix
+/payments/registrations/{client_id}/pix
 /public/contracts/{contract_id}
 ```
 
@@ -145,54 +122,40 @@ A API atual expõe as rotas diretamente na raiz do host, por exemplo:
 
 ## Estrutura do Projeto
 
-app/<br>
-├── (auth)<br>
-├── dashboard<br>
-├── contracts<br>
-├── payments<br>
-├── sucesso<br>
-├── falha<br>
-└── pendente<br>
-<br>
-components/<br>
-├── dashboard<br>
-├── feedback<br>
-├── forms<br>
-├── layout<br>
-└── ui<br>
+```txt
+app/
+├── (auth)/
+├── (dashboard)/
+├── sucesso/
+├── falha/
+└── pendente/
 
-hooks/<br>
+components/
+├── dashboard/
+├── feedback/
+├── forms/
+├── layout/
+└── ui/
 
-lib/<br>
-
-services/<br>
-
-types/<br>
-
-middleware.ts<br>
+hooks/
+lib/
+services/
+types/
+middleware.ts
+```
 
 ## Diretórios Principais
 
-### Diretório / Responsabilidade
-
-app — Rotas, layouts e páginas
-
-components/ui — Componentes reutilizáveis
-
-components/layout — Estrutura da aplicação
-
-components/forms — Formulários de autenticação e entrada de dados
-
-services — Comunicação HTTP com a API
-
-hooks — React Query e lógica de consumo
-
-lib — Utilitários e configurações
-
-types — Tipagens compartilhadas
-
-middleware.ts — Proteção de rotas
-
+- `app` — rotas, layouts e páginas
+- `components/ui` — componentes reutilizáveis
+- `components/dashboard` — telas e blocos do painel
+- `components/layout` — estrutura da aplicação
+- `components/forms` — formulários de autenticação e entrada de dados
+- `services` — comunicação HTTP com a API
+- `hooks` — React Query e lógica de consumo
+- `lib` — utilitários e configurações
+- `types` — tipagens compartilhadas
+- `middleware.ts` — proteção de rotas
 
 ---
 
@@ -272,6 +235,7 @@ npm run typecheck
 
 ## Fluxo Principal Atual
 
+```txt
 Cadastro
   ↓
 Login
@@ -284,4 +248,5 @@ Detalhe do evento
   ↓
 Inscrições e pagamentos vinculados ao evento
   ↓
-Geração de cobrança Pix/OpenPix ou checkout legado
+Geração de cobrança Pix/OpenPix para evento ou inscrição
+```

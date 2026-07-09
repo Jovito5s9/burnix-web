@@ -11,38 +11,19 @@ import type {
 export function useCreateCheckout() {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    CheckoutResponse,
-    Error,
-    CreateCheckoutPayload
-  >({
+  return useMutation<CheckoutResponse, Error, CreateCheckoutPayload>({
     mutationFn: createCheckout,
-
-    onSettled: async (
-      _data,
-      _error,
-      variables
-    ) => {
+    onSettled: async (_data, _error, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ["payments"] });
       await queryClient.invalidateQueries({
-        queryKey: ["payments"],
+        queryKey: ["payments", "contract", variables.contract_id],
       });
-
+      await queryClient.invalidateQueries({ queryKey: ["contracts"] });
       await queryClient.invalidateQueries({
-        queryKey: [
-          "payments",
-          variables.contract_id,
-        ],
+        queryKey: ["contracts", variables.contract_id],
       });
-
       await queryClient.invalidateQueries({
-        queryKey: ["contracts"],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          "contracts",
-          variables.contract_id,
-        ],
+        queryKey: ["contracts", variables.contract_id, "payments"],
       });
     },
   });

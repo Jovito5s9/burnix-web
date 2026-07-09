@@ -1,14 +1,17 @@
-export type CreateCheckoutPayload = {
-  contract_id: number;
-  payer_email: string;
-  payer_name: string;
-};
+import type {
+  CreateContractCheckoutPayload,
+  Payment,
+  PaymentPixResponse,
+} from "@/types/payment";
 
-export type CheckoutResponse = {
+export type CreateCheckoutPayload = CreateContractCheckoutPayload;
+
+export type CheckoutResponse = PaymentPixResponse & {
   id?: string;
   checkoutUrl: string;
-  checkout_url?: string;
+  checkout_url: string | null;
   paymentId?: string;
   payment_id?: string;
   status?: string;
+  payment: Payment;
 };

@@ -1,3 +1,4 @@
+LICENSE.md
 README.md
 app/(auth)/login/page.tsx
 app/(auth)/register/page.tsx
@@ -30,6 +31,8 @@ components/dashboard/contract-detail.tsx
 components/dashboard/contracts-page.tsx
 components/dashboard/dashboard-overview.tsx
 components/dashboard/payments-page.tsx
+components/dashboard/registration-detail.tsx
+components/dashboard/registrations-table.tsx
 components/feedback/.gitkeep
 components/feedback/status-badge.tsx
 components/forms/.gitkeep
@@ -50,11 +53,14 @@ components/ui/spinner.tsx
 eslint.config.mjs
 hooks/useAuth.ts
 hooks/useCheckout.ts
+hooks/useClients.ts
 hooks/useContracts.ts
 hooks/usePayments.ts
+hooks/useRegistrations.ts
 lib/checkout.ts
 lib/constants.ts
 lib/format.ts
+lib/get-error-message.ts
 lib/query-client.ts
 lib/utils.ts
 lib/validators.ts
@@ -72,11 +78,15 @@ public/window.svg
 services/api.ts
 services/auth.ts
 services/checkout.ts
+services/clients.ts
 services/contracts.ts
 services/payments.ts
+services/registrations.ts
 structure.txt
 tsconfig.json
 types/auth.ts
 types/checkout.ts
+types/client.ts
 types/contract.ts
 types/payment.ts
+types/registration.ts
