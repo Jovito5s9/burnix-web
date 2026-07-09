@@ -2,7 +2,7 @@ import { api } from "@/services/api";
 import type { Contract } from "@/types/contract";
 
 export async function listContracts() {
-  const { data } = await api.get<Contract[]>("/contracts");
+  const { data } = await api.get<Contract[]>("/contracts/");
   return data;
 }
 

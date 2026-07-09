@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getErrorMessage } from "@/lib/get-error-message";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -14,14 +15,13 @@ export function RegisterForm() {
   const { register, isRegistering } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: "",
     email: "",
     password: "",
   });
 
   const [error, setError] = useState<string | null>(null);
 
-  function updateField(field: string, value: string) {
+  function updateField(field: keyof typeof formData, value: string) {
     setFormData((current) => ({ ...current, [field]: value }));
   }
 
@@ -29,11 +29,29 @@ export function RegisterForm() {
     event.preventDefault();
     setError(null);
 
+    const email = formData.email.trim();
+    const password = formData.password;
+
+    if (password.length < 8 || password.length > 256) {
+      setError("A senha precisa ter entre 8 e 256 caracteres.");
+      return;
+    }
+
     try {
-      await register(formData);
-      router.push(searchParams.get("next") ?? "/dashboard");
+      await register({ email, password });
+
+      const loginUrl = new URL("/login", window.location.origin);
+      const nextUrl = searchParams.get("next");
+
+      loginUrl.searchParams.set("registered", "1");
+
+      if (nextUrl) {
+        loginUrl.searchParams.set("next", nextUrl);
+      }
+
+      router.push(`${loginUrl.pathname}${loginUrl.search}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível criar a conta.");
+      setError(getErrorMessage(err, "Não foi possível criar a conta."));
     }
   }
 
@@ -44,17 +62,6 @@ export function RegisterForm() {
           {error}
         </Alert>
       ) : null}
-
-      <div className="space-y-2">
-        <Label htmlFor="name">Nome</Label>
-        <Input
-          id="name"
-          placeholder="Seu nome"
-          value={formData.name}
-          onChange={(event) => updateField("name", event.target.value)}
-          required
-        />
-      </div>
 
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
@@ -73,9 +80,11 @@ export function RegisterForm() {
         <Input
           id="password"
           type="password"
-          placeholder="Crie uma senha"
+          placeholder="Crie uma senha com pelo menos 8 caracteres"
           value={formData.password}
           onChange={(event) => updateField("password", event.target.value)}
+          minLength={8}
+          maxLength={256}
           required
         />
       </div>

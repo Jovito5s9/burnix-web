@@ -1,9 +1,10 @@
 import { api } from "@/services/api";
 
 import type {
-  AuthResponse,
   LoginPayload,
+  LoginResponse,
   RegisterPayload,
+  RegisterResponse,
   AuthUser,
 } from "@/types/auth";
 
@@ -13,11 +14,11 @@ function saveToken(token: string) {
   if (typeof window === "undefined") return;
 
   localStorage.setItem(TOKEN_KEY, token);
-  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/`;
+  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; SameSite=Lax`;
 }
 
 export async function login(payload: LoginPayload) {
-  const { data } = await api.post<AuthResponse>("/auth/login", payload);
+  const { data } = await api.post<LoginResponse>("/auth/login", payload);
 
   saveToken(data.access_token);
 
@@ -25,9 +26,7 @@ export async function login(payload: LoginPayload) {
 }
 
 export async function register(payload: RegisterPayload) {
-  const { data } = await api.post<AuthResponse>("/auth/register", payload);
-
-  saveToken(data.access_token);
+  const { data } = await api.post<RegisterResponse>("/auth/register", payload);
 
   return data;
 }
@@ -41,5 +40,5 @@ export function clearToken() {
   if (typeof window === "undefined") return;
 
   localStorage.removeItem(TOKEN_KEY);
-  document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  document.cookie = `${TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
 }

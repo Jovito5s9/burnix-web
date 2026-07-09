@@ -1,13 +1,10 @@
 # Burnix Web
 
-Frontend oficial do Burnix, uma plataforma SaaS para gestão de pagamentos, contratos e cobranças.
+Frontend oficial do Burnix, uma plataforma SaaS para gestão de eventos, inscrições, pagamentos Pix e cobranças.
 
-O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e segura para gerenciamento de contratos, criação de pagamentos e acompanhamento de transações financeiras.
+O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e segura para gerenciamento de eventos, acompanhamento de inscrições e visualização de transações financeiras processadas pelo backend Burnix.
 
 > 🚧 Projeto em desenvolvimento ativo.
-
-
-
 
 ---
 
@@ -17,16 +14,18 @@ O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e seg
 
 Login de usuários
 
-Persistência de sessão
+Cadastro de usuários
+
+Persistência de sessão com JWT Bearer
 
 Proteção de rotas privadas
 
 Controle de acesso ao sistema
 
 
-### Gestão de Contratos
+### Gestão de Eventos
 
-Listagem de contratos
+Listagem de eventos
 
 Visualização de detalhes
 
@@ -35,13 +34,13 @@ Consulta de status
 
 ### Pagamentos
 
-Criação de checkouts
-
-Integração com Mercado Pago
+Geração de cobranças Pix/OpenPix
 
 Acompanhamento de pagamentos
 
-Fluxo de pagamento via PIX
+Fluxo de pagamento via Pix
+
+Compatibilidade com rota legada de checkout do backend
 
 
 ### Retornos de Pagamento
@@ -57,12 +56,11 @@ Página de pagamento pendente
 
 Comunicação com backend próprio
 
-Consumo de endpoints REST
+Consumo de endpoints REST sem prefixo global `/api/v1`
 
-Tratamento de erros centralizado
+Tratamento de erros centralizado, incluindo erros `422` do FastAPI/Pydantic e validações de formulário dinâmico
 
 Gerenciamento de cache com React Query
-
 
 
 ---
@@ -90,7 +88,6 @@ Axios
 Vercel
 
 
-
 ---
 
 ## Arquitetura
@@ -104,11 +101,20 @@ Next.js Frontend<br>
 Burnix API<br>
    │<br>
    ├── PostgreSQL<br>
-   ├── Mercado Pago<br>
+   ├── OpenPix / Pix<br>
    └── Serviços Internos<br>
 
-O frontend é responsável pela experiência do usuário e comunicação com a API do Burnix, enquanto toda lógica de negócio, processamento financeiro e integração com serviços externos permanece no backend.
+O frontend é responsável pela experiência do usuário e comunicação com a API do Burnix, enquanto toda lógica de negócio, processamento financeiro, webhooks e integração com serviços externos permanece no backend.
 
+A API atual expõe as rotas diretamente na raiz do host, por exemplo:
+
+```txt
+/auth/login
+/auth/register
+/contracts/
+/payments/
+/public/contracts/{contract_id}
+```
 
 ---
 
@@ -117,13 +123,16 @@ O frontend é responsável pela experiência do usuário e comunicação com a A
 app/<br>
 ├── (auth)<br>
 ├── dashboard<br>
-├── contratos<br>
-├── pagamentos<br>
+├── contracts<br>
+├── payments<br>
 ├── sucesso<br>
 ├── falha<br>
 └── pendente<br>
 <br>
 components/<br>
+├── dashboard<br>
+├── feedback<br>
+├── forms<br>
 ├── layout<br>
 └── ui<br>
 
@@ -139,29 +148,38 @@ middleware.ts<br>
 
 ## Diretórios Principais
 
-### Diretório	Responsabilidade
+### Diretório / Responsabilidade
 
-app	Rotas, layouts e páginas
-components/ui	Componentes reutilizáveis
-components/layout	Estrutura da aplicação
-services	Comunicação HTTP
-hooks	React Query e lógica de consumo
-lib	Utilitários e configurações
-types	Tipagens compartilhadas
-middleware.ts	Proteção de rotas
+app — Rotas, layouts e páginas
 
+components/ui — Componentes reutilizáveis
+
+components/layout — Estrutura da aplicação
+
+components/forms — Formulários de autenticação e entrada de dados
+
+services — Comunicação HTTP com a API
+
+hooks — React Query e lógica de consumo
+
+lib — Utilitários e configurações
+
+types — Tipagens compartilhadas
+
+middleware.ts — Proteção de rotas
 
 
 ---
 
 ## Variáveis de Ambiente
 
-Crie um arquivo .env.local:
+Crie um arquivo `.env.local`:
 
+```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-NEXT_PUBLIC_CHECKOUT_PATH=/checkout
-
+`NEXT_PUBLIC_CHECKOUT_PATH=/checkout` fazia parte do fluxo antigo de checkout e deve ser tratado como legado. O fluxo atual de pagamento usa Pix/OpenPix pelo backend.
 
 ---
 
@@ -169,20 +187,27 @@ NEXT_PUBLIC_CHECKOUT_PATH=/checkout
 
 ### Clonar o projeto
 
+```bash
 git clone https://github.com/jovito5s9/burnix-web.git
+```
 
 ### Instalar dependências
 
-pnpm install
+```bash
+npm install
+```
 
 ### Executar em desenvolvimento
 
-pnpm dev
+```bash
+npm run dev
+```
 
 ### A aplicação estará disponível em:
 
+```txt
 http://localhost:3000
-
+```
 
 ---
 
@@ -190,44 +215,51 @@ http://localhost:3000
 
 ### Desenvolvimento
 
-pnpm dev
+```bash
+npm run dev
+```
 
 ### Build de Produção
 
-pnpm build
+```bash
+npm run build
+```
 
 ### Executar Build
 
-pnpm start
+```bash
+npm run start
+```
 
 ### Lint
 
-pnpm lint
+```bash
+npm run lint
+```
 
 ### Verificação de Tipagem
 
-pnpm typecheck
-
+```bash
+npm run typecheck
+```
 
 ---
 
-## Fluxo Principal
+## Fluxo Principal Atual
 
+Cadastro
+  ↓
 Login
   ↓
 Dashboard
   ↓
-Contratos
+Eventos / Contracts
   ↓
-Criar Checkout
+Gerar cobrança Pix/OpenPix
   ↓
-Mercado Pago
+Acompanhar pagamento
   ↓
-Retorno
-  ├── Sucesso
-  ├── Falha
-  └── Pendente
-
+Retorno ou confirmação via backend/webhook
 
 ---
 
@@ -237,13 +269,11 @@ O frontend não armazena credenciais sensíveis nem executa regras críticas de 
 
 Toda lógica financeira, validações de pagamento, webhooks e processamento de transações são tratados exclusivamente pelo backend da plataforma.
 
-
 ---
 
 ## Status do Projeto
 
 Atualmente o projeto encontra-se em desenvolvimento ativo, recebendo melhorias contínuas de arquitetura, experiência do usuário e integração com os serviços da plataforma Burnix.
-
 
 ---
 

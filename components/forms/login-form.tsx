@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getErrorMessage } from "@/lib/get-error-message";
 
 export function LoginForm() {
   const router = useRouter();
@@ -17,20 +18,28 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const wasRegistered = searchParams.get("registered") === "1";
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
     try {
-      await login({ email, password });
+      await login({ email: email.trim(), password });
       router.push(searchParams.get("next") ?? "/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível entrar.");
+      setError(getErrorMessage(err, "Não foi possível entrar."));
     }
   }
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      {wasRegistered ? (
+        <Alert variant="success" title="Conta criada com sucesso">
+          Agora entre usando o email e a senha cadastrados.
+        </Alert>
+      ) : null}
+
       {error ? (
         <Alert variant="destructive" title="Falha na autenticação">
           {error}

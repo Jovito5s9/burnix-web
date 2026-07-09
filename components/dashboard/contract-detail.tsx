@@ -27,6 +27,7 @@ import { useCreateCheckout } from "@/hooks/useCheckout";
 import { usePayments } from "@/hooks/usePayments";
 
 import { formatCurrency, formatDate } from "@/lib/format";
+import { getErrorMessage } from "@/lib/get-error-message";
 
 import type { Payment } from "@/types/payment";
 
@@ -145,9 +146,7 @@ export function ContractDetail({
     } catch (error) {
 
       setFeedback(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível criar o checkout."
+        getErrorMessage(error, "Não foi possível criar o checkout.")
       );
     }
   }
@@ -179,12 +178,7 @@ export function ContractDetail({
       >
         <div className="space-y-3">
           <p>
-            {
-              (contractQuery.error as any)
-                ?.response?.data?.detail?.[0]
-                ?.msg ??
-              "Erro ao carregar contrato"
-            }
+            {getErrorMessage(contractQuery.error, "Erro ao carregar contrato")}
           </p>
 
           <Button
