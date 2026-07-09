@@ -26,6 +26,7 @@ import {
   useContractRegistrations,
 } from "@/hooks/useContracts";
 import { useCreateContractPixPayment } from "@/hooks/usePayments";
+import { exportPaymentsCsv, exportRegistrationsCsv } from "@/services/exports";
 import {
   formatCurrency,
   formatDate,
@@ -105,10 +106,48 @@ export function ContractDetail({ id }: ContractDetailProps) {
 
   const [pixResult, setPixResult] = useState<PaymentPixResponse | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [exportFeedback, setExportFeedback] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<"registrations" | "payments" | null>(null);
 
   const contract = contractQuery.data ?? null;
   const payments = paymentsQuery.data ?? [];
   const registrations = registrationsQuery.data ?? [];
+
+  function saveCsvFile(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  async function handleExport(kind: "registrations" | "payments") {
+    if (!contract) return;
+
+    setExportFeedback(null);
+    setExporting(kind);
+
+    try {
+      const result = kind === "registrations"
+        ? await exportRegistrationsCsv(contract.id)
+        : await exportPaymentsCsv(contract.id);
+
+      saveCsvFile(result.blob, result.filename);
+      setExportFeedback(
+        kind === "registrations"
+          ? "Exportação de inscrições CSV iniciada com sucesso."
+          : "Exportação de pagamentos CSV iniciada com sucesso."
+      );
+    } catch (error) {
+      setExportFeedback(getErrorMessage(error, "Não foi possível exportar o CSV."));
+    } finally {
+      setExporting(null);
+    }
+  }
 
   async function handleCreatePix(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -220,6 +259,17 @@ export function ContractDetail({ id }: ContractDetailProps) {
         {pixResult ? (
           <div className="mb-6">
             <PixResultBox result={pixResult} />
+          </div>
+        ) : null}
+
+        {exportFeedback ? (
+          <div className="mb-6">
+            <Alert
+              variant={exportFeedback.includes("sucesso") ? "success" : "destructive"}
+              title="Exportação CSV"
+            >
+              <p>{exportFeedback}</p>
+            </Alert>
           </div>
         ) : null}
 
@@ -421,7 +471,41 @@ export function ContractDetail({ id }: ContractDetailProps) {
             </Card>
           </div>
 
-          <div>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Exportações CSV</CardTitle>
+                <CardDescription>
+                  Baixe inscrições e pagamentos pelas rotas protegidas de exportação do backend.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  type="button"
+                  disabled={exporting !== null}
+                  onClick={() => handleExport("registrations")}
+                >
+                  {exporting === "registrations" ? "Exportando inscrições..." : "Exportar inscrições CSV"}
+                </Button>
+
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  type="button"
+                  disabled={exporting !== null}
+                  onClick={() => handleExport("payments")}
+                >
+                  {exporting === "payments" ? "Exportando pagamentos..." : "Exportar pagamentos CSV"}
+                </Button>
+
+                <p className="text-xs leading-5 text-slate-500">
+                  O token Bearer é enviado pelo interceptor da API também em downloads com responseType blob.
+                </p>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Gerar Pix/OpenPix</CardTitle>

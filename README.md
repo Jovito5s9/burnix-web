@@ -48,6 +48,23 @@ O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e seg
 - Envio dos campos dinâmicos dentro de `extra_fields`
 - Exibição de erros `422` por campo quando o backend retorna `detail.errors`
 
+### Perfil de Cobrança
+
+- Página `/settings` com formulário real para perfil de cobrança do organizador
+- Consulta de perfil usando `GET /billing-profiles/me`
+- Tratamento de `404` como “perfil ainda não criado”
+- Criação/atualização usando `PUT /billing-profiles/me`
+- Campos de chave Pix, tipo da chave Pix, documento e nome do recebedor
+- Exibição do status de cobrança e plano atual no formulário
+- Resumo do perfil de cobrança na visão geral do dashboard
+
+### Exportações CSV
+
+- Exportação de inscrições do evento usando `GET /contracts/{contract_id}/export/registrations.csv`
+- Exportação de pagamentos do evento usando `GET /contracts/{contract_id}/export/payments.csv`
+- Downloads protegidos com Bearer token pelo interceptor da API
+- Uso de `responseType: "blob"` para baixar o arquivo CSV retornado pelo backend
+
 ### Pagamentos Pix/OpenPix
 
 - Consulta global de pagamentos usando `GET /payments/`
@@ -75,6 +92,8 @@ Essas páginas continuam disponíveis para compatibilidade, mas a confirmação 
 - Mutations para criar, atualizar e excluir eventos
 - Mutations específicas para Pix/OpenPix de evento e de inscrição
 - Mutations para criar, atualizar e remover campos dinâmicos de formulário
+- Hooks e serviços para perfil de cobrança do organizador
+- Serviços de exportação CSV com download via Blob
 - Fluxo público sem autenticação para evento, inscrição e Pix da inscrição
 
 ---
@@ -129,6 +148,9 @@ A API atual expõe as rotas diretamente na raiz do host, por exemplo:
 /public/contracts/{contract_id}
 /public/contracts/{contract_id}/registrations
 /contracts/{contract_id}/form-fields/
+/billing-profiles/me
+/contracts/{contract_id}/export/registrations.csv
+/contracts/{contract_id}/export/payments.csv
 ```
 
 > Observação: o backend ainda usa o recurso técnico `Contract`, mas o frontend apresenta esse recurso como **Evento** para o usuário final. Por isso a rota continua `/contracts`, enquanto os textos da interface usam “Eventos”.
@@ -264,7 +286,9 @@ Eventos (`/contracts`)
   ↓
 Detalhe do evento
   ↓
-Campos dinâmicos, inscrições e pagamentos vinculados ao evento
+Campos dinâmicos, inscrições, pagamentos vinculados e exportações CSV
+  ↓
+Configurações (`/settings`) para perfil de cobrança Pix
   ↓
 Página pública (`/eventos/{contract_id}`)
   ↓

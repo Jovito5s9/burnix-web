@@ -14,6 +14,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusBadge } from "@/components/feedback/status-badge";
+import { useBillingProfile } from "@/hooks/useBillingProfile";
 import { useClients } from "@/hooks/useClients";
 import { useContracts } from "@/hooks/useContracts";
 import { usePayments } from "@/hooks/usePayments";
@@ -23,8 +24,14 @@ export function DashboardOverview() {
   const contractsQuery = useContracts({ skip: 0, limit: 50 });
   const paymentsQuery = usePayments({ skip: 0, limit: 50 });
   const clientsQuery = useClients({ skip: 0, limit: 100 });
+  const billingProfileQuery = useBillingProfile();
 
-  if (contractsQuery.isLoading || paymentsQuery.isLoading || clientsQuery.isLoading) {
+  if (
+    contractsQuery.isLoading ||
+    paymentsQuery.isLoading ||
+    clientsQuery.isLoading ||
+    billingProfileQuery.isLoading
+  ) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <Spinner label="Carregando visão geral..." />
@@ -71,6 +78,18 @@ export function DashboardOverview() {
     (client) => client.registration_status === "pending_payment"
   ).length;
 
+  const billingProfile = billingProfileQuery.data ?? null;
+  const billingStatusLabel = billingProfile
+    ? {
+        pending: "Pendente",
+        active: "Ativo",
+        suspended: "Suspenso",
+        cancelled: "Cancelado",
+      }[billingProfile.billing_status] ?? billingProfile.billing_status
+    : billingProfileQuery.error
+      ? "Indisponível"
+      : "Não criado";
+
   const recentContracts = contractsQuery.contracts.slice(0, 3);
   const recentPayments = paymentsQuery.payments.slice(0, 3);
 
@@ -87,7 +106,7 @@ export function DashboardOverview() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <Card>
             <CardHeader>
               <CardDescription>Eventos totais</CardDescription>
@@ -125,6 +144,22 @@ export function DashboardOverview() {
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
               {paidPayments} pagamentos pagos e {pendingPayments} pendentes.
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Perfil de cobrança</CardDescription>
+              <CardTitle>{billingStatusLabel}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-slate-600">
+              {billingProfile ? (
+                <>Chave Pix {billingProfile.pix_key ? "configurada" : "não informada"}.</>
+              ) : billingProfileQuery.error ? (
+                <>Não foi possível consultar `/billing-profiles/me`.</>
+              ) : (
+                <>Crie o perfil em configurações para cadastrar a chave Pix.</>
+              )}
             </CardContent>
           </Card>
         </div>
