@@ -1,13 +1,20 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Container } from "@/components/layout/container";
-import { APP_NAME, dashboardNavLinks } from "@/lib/constants";
+import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { APP_NAME, adminDashboardNavLink, dashboardNavLinks } from "@/lib/constants";
 
 export function DashboardShell({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const { isAdmin, isLoadingUser } = useAuth();
+  const links = isAdmin ? [...dashboardNavLinks, adminDashboardNavLink] : dashboardNavLinks;
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
       <div className="border-b border-slate-200 bg-white">
@@ -16,8 +23,8 @@ export function DashboardShell({
             <p className="text-sm font-semibold text-slate-950">{APP_NAME}</p>
             <p className="text-sm text-slate-500">Painel de eventos, inscrições e Pix</p>
           </div>
-          <nav className="flex flex-wrap gap-3">
-            {dashboardNavLinks.map((item) => (
+          <nav className="flex flex-wrap items-center gap-3">
+            {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -26,6 +33,7 @@ export function DashboardShell({
                 {item.label}
               </Link>
             ))}
+            {isLoadingUser ? <Spinner label="" className="h-4 w-4" /> : null}
           </nav>
         </Container>
       </div>

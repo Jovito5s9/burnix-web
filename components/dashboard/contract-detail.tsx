@@ -62,7 +62,7 @@ function PixResultBox({ result }: { result: PaymentPixResponse }) {
         {result.checkout_url ? (
           <Button asChild variant="secondary" size="sm">
             <a href={result.checkout_url} target="_blank" rel="noreferrer">
-              Abrir checkout da OpenPix
+              Abrir link de pagamento OpenPix
             </a>
           </Button>
         ) : null}
@@ -414,7 +414,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 <div>
                   <CardTitle>Pagamentos vinculados</CardTitle>
                   <CardDescription>
-                    Histórico financeiro carregado de `/contracts/{contract.id}/payments`.
+                    Histórico financeiro carregado de `/contracts/{contract.id}/payments`, fonte confiável após webhook OpenPix.
                   </CardDescription>
                 </div>
                 <Button asChild variant="secondary" size="sm">

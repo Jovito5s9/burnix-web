@@ -12,3 +12,5 @@ export const dashboardNavLinks = [
   { label: "Pagamentos", href: "/payments" },
   { label: "Configurações", href: "/settings" },
 ] as const;
+
+export const adminDashboardNavLink = { label: "Admin", href: "/admin" } as const;

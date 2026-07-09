@@ -15,18 +15,26 @@ export default function Page({ searchParams }: PageProps) {
   const paymentId = getValue(searchParams?.payment_id);
   const contractId = getValue(searchParams?.contract_id);
   const checkoutId = getValue(searchParams?.checkout_id);
+  const correlationId = getValue(searchParams?.correlation_id);
 
   return (
     <section className="py-16">
       <Container className="max-w-2xl">
-        <Alert variant="success" title="Pagamento aprovado">
+        <Alert variant="success" title="Retorno de pagamento Pix recebido">
           <div className="space-y-2">
-            <p>O checkout retornou com sucesso e o fluxo pode ser consultado no painel.</p>
-            {paymentId || contractId || checkoutId ? (
+            <p>
+              Esta página existe apenas para compatibilidade com retornos externos. O pagamento Pix/OpenPix
+              só deve ser considerado confirmado depois que o backend processar o webhook da OpenPix.
+            </p>
+            <p>
+              Consulte a confirmação real em <strong>Pagamentos</strong> ou no detalhe do evento.
+            </p>
+            {paymentId || contractId || checkoutId || correlationId ? (
               <p className="text-sm text-green-900/80">
                 {paymentId ? `Pagamento: ${paymentId}. ` : ""}
                 {contractId ? `Evento: ${contractId}. ` : ""}
-                {checkoutId ? `Checkout: ${checkoutId}.` : ""}
+                {checkoutId ? `Referência legada: ${checkoutId}. ` : ""}
+                {correlationId ? `Correlação OpenPix: ${correlationId}.` : ""}
               </p>
             ) : null}
           </div>
@@ -36,6 +44,11 @@ export default function Page({ searchParams }: PageProps) {
           <Button asChild>
             <Link href="/payments">Ver pagamentos</Link>
           </Button>
+          {contractId ? (
+            <Button variant="secondary" asChild>
+              <Link href={`/contracts/${contractId}`}>Abrir evento</Link>
+            </Button>
+          ) : null}
           <Button variant="secondary" asChild>
             <Link href="/dashboard">Ir para o dashboard</Link>
           </Button>

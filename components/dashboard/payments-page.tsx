@@ -208,7 +208,7 @@ export function PaymentsPage() {
                             {payment.checkout_url ? (
                               <Button asChild variant="secondary" size="sm">
                                 <a href={payment.checkout_url} target="_blank" rel="noreferrer">
-                                  Abrir checkout
+                                  Abrir link Pix/OpenPix
                                 </a>
                               </Button>
                             ) : null}

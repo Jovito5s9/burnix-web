@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const protectedPrefixes = ["/dashboard", "/contracts", "/payments", "/settings"];
+const protectedPrefixes = ["/dashboard", "/contracts", "/payments", "/settings", "/admin"];
 const publicPrefixes = ["/eventos", "/public"];
 
 export function middleware(request: NextRequest) {
@@ -31,5 +31,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/contracts/:path*", "/payments/:path*", "/settings/:path*", "/eventos/:path*"],
+  matcher: ["/dashboard/:path*", "/contracts/:path*", "/payments/:path*", "/settings/:path*", "/admin/:path*", "/eventos/:path*"],
 };

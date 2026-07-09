@@ -13,18 +13,29 @@ function getValue(value: string | string[] | undefined) {
 
 export default function Page({ searchParams }: PageProps) {
   const paymentId = getValue(searchParams?.payment_id);
+  const contractId = getValue(searchParams?.contract_id);
   const checkoutId = getValue(searchParams?.checkout_id);
+  const correlationId = getValue(searchParams?.correlation_id);
 
   return (
     <section className="py-16">
       <Container className="max-w-2xl">
-        <Alert variant="warning" title="Pagamento pendente">
+        <Alert variant="warning" title="Pagamento Pix pendente">
           <div className="space-y-2">
-            <p>O checkout ainda não foi confirmado. O pagamento pode ser consultado novamente em instantes.</p>
-            {paymentId || checkoutId ? (
+            <p>
+              O retorno externo indicou pendência, mas a confirmação definitiva depende do webhook OpenPix
+              recebido e processado pelo backend.
+            </p>
+            <p>
+              Reconsulte o pagamento em alguns instantes por <strong>GET /payments/</strong>,
+              <strong> GET /payments/{"{payment_id}"}</strong> ou pelo detalhe do evento.
+            </p>
+            {paymentId || contractId || checkoutId || correlationId ? (
               <p className="text-sm text-amber-900/80">
                 {paymentId ? `Pagamento: ${paymentId}. ` : ""}
-                {checkoutId ? `Checkout: ${checkoutId}.` : ""}
+                {contractId ? `Evento: ${contractId}. ` : ""}
+                {checkoutId ? `Referência legada: ${checkoutId}. ` : ""}
+                {correlationId ? `Correlação OpenPix: ${correlationId}.` : ""}
               </p>
             ) : null}
           </div>
@@ -34,6 +45,11 @@ export default function Page({ searchParams }: PageProps) {
           <Button asChild>
             <Link href="/payments">Consultar pagamentos</Link>
           </Button>
+          {contractId ? (
+            <Button variant="secondary" asChild>
+              <Link href={`/contracts/${contractId}`}>Abrir evento</Link>
+            </Button>
+          ) : null}
           <Button variant="secondary" asChild>
             <Link href="/dashboard">Ir para o dashboard</Link>
           </Button>

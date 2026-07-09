@@ -16,7 +16,7 @@ type PixPaymentBoxProps = {
 
 export function PixPaymentBox({
   result,
-  title = "Pagamento Pix gerado",
+  title = "Pagamento Pix/OpenPix gerado",
 }: PixPaymentBoxProps) {
   return (
     <Alert variant="success" title={title}>
@@ -33,7 +33,7 @@ export function PixPaymentBox({
         {result.checkout_url ? (
           <Button asChild variant="secondary" size="sm">
             <a href={result.checkout_url} target="_blank" rel="noreferrer">
-              Abrir checkout da OpenPix
+              Abrir link de pagamento OpenPix
             </a>
           </Button>
         ) : null}
@@ -48,6 +48,10 @@ export function PixPaymentBox({
             />
           </div>
         ) : null}
+
+        <p className="text-xs leading-5 text-green-900/80">
+          A confirmação definitiva acontece no backend após o webhook OpenPix e pode ser conferida nos endpoints de pagamentos.
+        </p>
 
         {result.copy_and_paste ? (
           <div>

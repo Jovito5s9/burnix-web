@@ -37,7 +37,7 @@ O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e seg
 - Página pública de evento em `/eventos/{contract_id}` usando `GET /public/contracts/{contract_id}`
 - Criação de inscrição pública usando `POST /public/contracts/{contract_id}/registrations`
 - Geração automática de Pix da inscrição pública usando `POST /payments/registrations/{client_id}/pix`
-- Exibição pública de QR Code, Pix copia e cola e checkout URL quando retornados pelo backend
+- Exibição pública de QR Code, Pix copia e cola e link de pagamento OpenPix quando retornados pelo backend
 
 ### Campos Dinâmicos de Formulário
 
@@ -61,7 +61,11 @@ O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e seg
 ### Exportações CSV
 
 - Exportação de inscrições do evento usando `GET /contracts/{contract_id}/export/registrations.csv`
-- Exportação de pagamentos do evento usando `GET /contracts/{contract_id}/export/payments.csv`
+- Exportação de pagamentos do evento usando `GET /contracts/{contract_id}/export/payments.csv
+/admin/users
+/admin/contracts
+/admin/clients
+/admin/payments`
 - Downloads protegidos com Bearer token pelo interceptor da API
 - Uso de `responseType: "blob"` para baixar o arquivo CSV retornado pelo backend
 
@@ -73,15 +77,29 @@ O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e seg
 - Geração de cobrança Pix/OpenPix para evento usando `POST /payments/contracts/{contract_id}/pix`
 - Geração de cobrança Pix/OpenPix para inscrição usando `POST /payments/registrations/{client_id}/pix`
 - Compatibilidade técnica com a rota legada `POST /payments/contracts/{contract_id}/checkout`
-- Exibição de checkout URL, QR Code, código Pix copia e cola, provider, status detalhado, taxa da plataforma e valor líquido
+- Exibição de link de pagamento OpenPix, QR Code, código Pix copia e cola, provider, status detalhado, taxa da plataforma e valor líquido
 
 ### Retornos de Pagamento
 
-- Página de sucesso
-- Página de falha
-- Página de pagamento pendente
+- Página de sucesso em `/sucesso`
+- Página de falha em `/falha`
+- Página de pagamento pendente em `/pendente`
+- Textos atualizados para pagamento Pix/OpenPix
+- Páginas mantidas apenas como compatibilidade com retornos externos/legados
 
-Essas páginas continuam disponíveis para compatibilidade, mas a confirmação real do pagamento deve ser acompanhada pelos endpoints de pagamentos do backend e pelos webhooks OpenPix.
+Essas páginas não devem ser usadas como fonte definitiva de confirmação. A confirmação real do pagamento deve vir do webhook OpenPix processado pelo backend e depois ser acompanhada por `GET /payments/`, `GET /payments/{payment_id}` ou `GET /contracts/{contract_id}/payments`.
+
+### Painel Administrativo
+
+- Página `/admin` dentro do dashboard
+- Link Admin exibido apenas para usuários com role `admin`, `superuser` ou `super_user` retornada por `auth/me`
+- Consulta das rotas administrativas:
+  - `GET /admin/users`
+  - `GET /admin/contracts`
+  - `GET /admin/clients`
+  - `GET /admin/payments`
+- Tratamento de `403` como “sem permissão”
+- Paginação por `skip` e `limit`, com limite máximo de 500 respeitado no serviço
 
 ### Integração com API
 
@@ -94,6 +112,7 @@ Essas páginas continuam disponíveis para compatibilidade, mas a confirmação 
 - Mutations para criar, atualizar e remover campos dinâmicos de formulário
 - Hooks e serviços para perfil de cobrança do organizador
 - Serviços de exportação CSV com download via Blob
+- Serviços e hooks administrativos para `/admin/users`, `/admin/contracts`, `/admin/clients` e `/admin/payments`
 - Fluxo público sem autenticação para evento, inscrição e Pix da inscrição
 
 ---
@@ -151,6 +170,10 @@ A API atual expõe as rotas diretamente na raiz do host, por exemplo:
 /billing-profiles/me
 /contracts/{contract_id}/export/registrations.csv
 /contracts/{contract_id}/export/payments.csv
+/admin/users
+/admin/contracts
+/admin/clients
+/admin/payments
 ```
 
 > Observação: o backend ainda usa o recurso técnico `Contract`, mas o frontend apresenta esse recurso como **Evento** para o usuário final. Por isso a rota continua `/contracts`, enquanto os textos da interface usam “Eventos”.
@@ -169,6 +192,7 @@ app/
 └── pendente/
 
 components/
+├── admin/
 ├── dashboard/
 ├── feedback/
 ├── forms/
@@ -187,6 +211,7 @@ middleware.ts
 
 - `app` — rotas, layouts e páginas
 - `components/ui` — componentes reutilizáveis
+- `components/admin` — visão administrativa para usuários, eventos, participantes e pagamentos
 - `components/dashboard` — telas e blocos do painel
 - `components/layout` — estrutura da aplicação
 - `components/forms` — formulários de autenticação e entrada de dados
@@ -207,7 +232,7 @@ Crie um arquivo `.env.local`:
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-`NEXT_PUBLIC_CHECKOUT_PATH=/checkout` fazia parte do fluxo antigo de checkout e deve ser tratado como legado. O fluxo atual de pagamento usa Pix/OpenPix pelo backend.
+`NEXT_PUBLIC_CHECKOUT_PATH=/checkout` fazia parte do fluxo antigo de checkout externo e deve ser tratado como legado. O fluxo atual de pagamento usa Pix/OpenPix pelo backend.
 
 ---
 

@@ -13,18 +13,27 @@ function getValue(value: string | string[] | undefined) {
 
 export default function Page({ searchParams }: PageProps) {
   const paymentId = getValue(searchParams?.payment_id);
+  const contractId = getValue(searchParams?.contract_id);
   const message = getValue(searchParams?.message);
 
   return (
     <section className="py-16">
       <Container className="max-w-2xl">
-        <Alert variant="destructive" title="Checkout não concluído">
+        <Alert variant="destructive" title="Pagamento Pix não concluído">
           <div className="space-y-2">
-            <p>O fluxo retornou com falha e a tentativa pode ser revisada no painel.</p>
-            {paymentId || message ? (
+            <p>
+              Esta página é um retorno externo legado. Ela não substitui o status real salvo pelo backend
+              depois do webhook OpenPix.
+            </p>
+            <p>
+              Revise a cobrança em <strong>Pagamentos</strong> ou no detalhe do evento para confirmar o
+              status atualizado.
+            </p>
+            {paymentId || contractId || message ? (
               <p className="text-sm text-red-900/80">
                 {paymentId ? `Pagamento: ${paymentId}. ` : ""}
-                {message ? `Motivo: ${message}.` : ""}
+                {contractId ? `Evento: ${contractId}. ` : ""}
+                {message ? `Motivo recebido: ${message}.` : ""}
               </p>
             ) : null}
           </div>
@@ -32,10 +41,15 @@ export default function Page({ searchParams }: PageProps) {
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/contracts">Revisar eventos</Link>
+            <Link href="/payments">Consultar pagamentos</Link>
           </Button>
+          {contractId ? (
+            <Button variant="secondary" asChild>
+              <Link href={`/contracts/${contractId}`}>Abrir evento</Link>
+            </Button>
+          ) : null}
           <Button variant="secondary" asChild>
-            <Link href="/dashboard">Ir para o dashboard</Link>
+            <Link href="/contracts">Revisar eventos</Link>
           </Button>
         </div>
       </Container>

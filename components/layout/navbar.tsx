@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { APP_NAME, navLinks } from "@/lib/constants";
 
-const protectedPrefixes = ["/dashboard", "/contracts", "/payments", "/settings"];
+const protectedPrefixes = ["/dashboard", "/contracts", "/payments", "/settings", "/admin"];
 
 export function Navbar() {
   const pathname = usePathname();

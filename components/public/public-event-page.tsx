@@ -130,7 +130,7 @@ export function PublicEventPage({ id }: PublicEventPageProps) {
 
               <Alert variant="info" title="Pagamento">
                 <p>
-                  Após enviar a inscrição, o frontend chama o Pix público da inscrição e mostra QR Code, copia e cola ou checkout URL quando retornados pelo backend.
+                  Após enviar a inscrição, o frontend chama o Pix público da inscrição e mostra QR Code, copia e cola ou link de pagamento OpenPix quando retornados pelo backend.
                 </p>
               </Alert>
             </CardContent>
