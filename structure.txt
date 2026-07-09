@@ -19,6 +19,9 @@ app/(dashboard)/payments/loading.tsx
 app/(dashboard)/payments/page.tsx
 app/(dashboard)/settings/page.tsx
 app/error.tsx
+app/eventos/[id]/error.tsx
+app/eventos/[id]/loading.tsx
+app/eventos/[id]/page.tsx
 app/falha/page.tsx
 app/favicon.ico
 app/globals.css
@@ -30,6 +33,8 @@ app/sucesso/page.tsx
 components/dashboard/contract-detail.tsx
 components/dashboard/contracts-page.tsx
 components/dashboard/dashboard-overview.tsx
+components/dashboard/form-field-editor.tsx
+components/dashboard/form-fields-manager.tsx
 components/dashboard/payments-page.tsx
 components/dashboard/registration-detail.tsx
 components/dashboard/registrations-table.tsx
@@ -42,6 +47,10 @@ components/layout/container.tsx
 components/layout/dashboard-shell.tsx
 components/layout/navbar.tsx
 components/layout/providers.tsx
+components/public/dynamic-registration-fields.tsx
+components/public/pix-payment-box.tsx
+components/public/public-event-page.tsx
+components/public/registration-form.tsx
 components/ui/alert.tsx
 components/ui/badge.tsx
 components/ui/button.tsx
@@ -55,7 +64,10 @@ hooks/useAuth.ts
 hooks/useCheckout.ts
 hooks/useClients.ts
 hooks/useContracts.ts
+hooks/useFormFields.ts
 hooks/usePayments.ts
+hooks/usePublicContract.ts
+hooks/usePublicRegistration.ts
 hooks/useRegistrations.ts
 lib/checkout.ts
 lib/constants.ts
@@ -80,7 +92,9 @@ services/auth.ts
 services/checkout.ts
 services/clients.ts
 services/contracts.ts
+services/form-fields.ts
 services/payments.ts
+services/public-contracts.ts
 services/registrations.ts
 structure.txt
 tsconfig.json
@@ -88,5 +102,7 @@ types/auth.ts
 types/checkout.ts
 types/client.ts
 types/contract.ts
+types/form-field.ts
 types/payment.ts
+types/public-contract.ts
 types/registration.ts

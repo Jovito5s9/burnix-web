@@ -10,12 +10,12 @@ const highlights = [
     description: "Crie eventos, acompanhe capacidade, datas, prazo de inscrição e status de publicação.",
   },
   {
-    title: "Inscrições e participantes",
-    description: "Use a estrutura atual do backend para conectar eventos, inscrições e pagamentos em um único fluxo.",
+    title: "Inscrições públicas",
+    description: "Publique a página `/eventos/{id}`, receba participantes e gere Pix/OpenPix logo após a inscrição.",
   },
   {
-    title: "Pagamentos preparados",
-    description: "Acompanhe cobranças vinculadas ao evento e mantenha compatibilidade com as rotas atuais do backend.",
+    title: "Formulários dinâmicos",
+    description: "Configure campos adicionais por evento e envie as respostas em `extra_fields` para o backend.",
   },
 ];
 
@@ -52,7 +52,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-600">
-                  Estrutura ideal para organizadores que precisam operar eventos e evoluir o fluxo público de inscrição.
+                  Estrutura ideal para organizadores que precisam operar eventos, inscrições públicas e pagamentos Pix/OpenPix.
                 </p>
               </CardContent>
             </Card>

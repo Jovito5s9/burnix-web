@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getErrorMessage } from "@/lib/get-error-message";
+import { ApiClientError, getApiFieldErrors, getErrorMessage } from "@/lib/get-error-message";
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const TOKEN_KEY = "burnix.access_token";
@@ -52,7 +52,8 @@ api.interceptors.response.use(
       error,
       "Erro inesperado na comunicação com a API."
     );
+    const fieldErrors = getApiFieldErrors(error);
 
-    return Promise.reject(new Error(message));
+    return Promise.reject(new ApiClientError(message, status, fieldErrors));
   }
 );

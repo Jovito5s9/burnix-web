@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
+import { FormFieldsManager } from "@/components/dashboard/form-fields-manager";
 import { RegistrationsTable } from "@/components/dashboard/registrations-table";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Alert } from "@/components/ui/alert";
@@ -194,9 +195,14 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 Consulte dados do evento, inscrições e pagamentos usando os endpoints dedicados do contrato.
               </p>
             </div>
-            <Button asChild variant="secondary">
-              <Link href="/contracts">Voltar para eventos</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="secondary">
+                <Link href={`/eventos/${contract.id}`}>Ver página pública</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/contracts">Voltar para eventos</Link>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -312,6 +318,19 @@ export function ContractDetail({ id }: ContractDetailProps) {
                     {contract.id}
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Campos do formulário</CardTitle>
+                <CardDescription>
+                  Configure os campos dinâmicos usados na página pública `/eventos/{contract.id}`.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FormFieldsManager contractId={contract.id} />
               </CardContent>
             </Card>
 

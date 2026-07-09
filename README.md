@@ -34,8 +34,19 @@ O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e seg
 - Componentes de listagem e detalhe de inscrições no painel do evento
 - Exibição de nome, e-mail, telefone, documento, status de inscrição, status de pagamento e campos extras
 - Botão para gerar Pix/OpenPix de uma inscrição usando `POST /payments/registrations/{client_id}/pix`
+- Página pública de evento em `/eventos/{contract_id}` usando `GET /public/contracts/{contract_id}`
+- Criação de inscrição pública usando `POST /public/contracts/{contract_id}/registrations`
+- Geração automática de Pix da inscrição pública usando `POST /payments/registrations/{client_id}/pix`
+- Exibição pública de QR Code, Pix copia e cola e checkout URL quando retornados pelo backend
 
-As páginas públicas de inscrição ainda serão implementadas nas próximas etapas.
+### Campos Dinâmicos de Formulário
+
+- Tipos e serviços para `/contracts/{contract_id}/form-fields/`
+- Listagem, criação, edição e remoção de campos no detalhe do evento
+- Suporte administrativo a `field_key`, `label`, `type`, `required`, `order`, `options` e `validation_rules`
+- Renderização pública de campos `text`, `email`, `number`, `date`, `select`, `radio`, `checkbox` e `multiselect`
+- Envio dos campos dinâmicos dentro de `extra_fields`
+- Exibição de erros `422` por campo quando o backend retorna `detail.errors`
 
 ### Pagamentos Pix/OpenPix
 
@@ -63,6 +74,8 @@ Essas páginas continuam disponíveis para compatibilidade, mas a confirmação 
 - Gerenciamento de cache com React Query
 - Mutations para criar, atualizar e excluir eventos
 - Mutations específicas para Pix/OpenPix de evento e de inscrição
+- Mutations para criar, atualizar e remover campos dinâmicos de formulário
+- Fluxo público sem autenticação para evento, inscrição e Pix da inscrição
 
 ---
 
@@ -114,6 +127,8 @@ A API atual expõe as rotas diretamente na raiz do host, por exemplo:
 /payments/contracts/{contract_id}/pix
 /payments/registrations/{client_id}/pix
 /public/contracts/{contract_id}
+/public/contracts/{contract_id}/registrations
+/contracts/{contract_id}/form-fields/
 ```
 
 > Observação: o backend ainda usa o recurso técnico `Contract`, mas o frontend apresenta esse recurso como **Evento** para o usuário final. Por isso a rota continua `/contracts`, enquanto os textos da interface usam “Eventos”.
@@ -126,6 +141,7 @@ A API atual expõe as rotas diretamente na raiz do host, por exemplo:
 app/
 ├── (auth)/
 ├── (dashboard)/
+├── eventos/[id]/
 ├── sucesso/
 ├── falha/
 └── pendente/
@@ -135,6 +151,7 @@ components/
 ├── feedback/
 ├── forms/
 ├── layout/
+├── public/
 └── ui/
 
 hooks/
@@ -151,6 +168,7 @@ middleware.ts
 - `components/dashboard` — telas e blocos do painel
 - `components/layout` — estrutura da aplicação
 - `components/forms` — formulários de autenticação e entrada de dados
+- `components/public` — página pública de evento, inscrição e pagamento Pix
 - `services` — comunicação HTTP com a API
 - `hooks` — React Query e lógica de consumo
 - `lib` — utilitários e configurações
@@ -246,7 +264,11 @@ Eventos (`/contracts`)
   ↓
 Detalhe do evento
   ↓
-Inscrições e pagamentos vinculados ao evento
+Campos dinâmicos, inscrições e pagamentos vinculados ao evento
   ↓
-Geração de cobrança Pix/OpenPix para evento ou inscrição
+Página pública (`/eventos/{contract_id}`)
+  ↓
+Inscrição pública
+  ↓
+Geração de cobrança Pix/OpenPix da inscrição
 ```
