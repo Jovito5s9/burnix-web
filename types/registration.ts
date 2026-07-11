@@ -9,7 +9,8 @@ export type RegistrationPaymentStatus =
   | "paid"
   | "expired"
   | "error"
-  | "refunded";
+  | "refunded"
+  | "not_required";
 
 export type Registration = {
   id: number;
@@ -27,12 +28,12 @@ export type Registration = {
   updated_at: string;
 };
 
+/** @deprecated Use ParticipantRegistrationCreatePayload from @/types/participant. */
 export type PublicRegistrationPayload = {
   name: string;
-  email?: string | null;
   phone?: string | null;
   document?: string | null;
   sex?: string | null;
   age?: number | null;
-  extra_fields?: Record<string, unknown> | null;
+  extra_fields?: Record<string, unknown>;
 };

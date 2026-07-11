@@ -2,7 +2,6 @@ import { api } from "@/services/api";
 import type {
   CreateContractCheckoutPayload,
   CreateContractPixPayload,
-  CreateRegistrationPixPayload,
   Payment,
   PaymentListParams,
   PaymentPixResponse,
@@ -59,14 +58,3 @@ export async function createContractCheckoutPayment(
   return normalizePaymentPixResponse(data);
 }
 
-export async function createRegistrationPixPayment(
-  clientId: string | number,
-  payload: CreateRegistrationPixPayload = {}
-) {
-  const { data } = await api.post<unknown>(
-    `/payments/registrations/${clientId}/pix`,
-    payload
-  );
-
-  return normalizePaymentPixResponse(data);
-}

@@ -7,7 +7,7 @@ import { RegistrationDetail } from "@/components/dashboard/registration-detail";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { createRegistrationPixPayment } from "@/services/registrations";
+import { createContractPixPayment } from "@/services/payments";
 import { formatDate } from "@/lib/format";
 import { getErrorMessage } from "@/lib/get-error-message";
 import type { PaymentPixResponse } from "@/types/payment";
@@ -36,6 +36,7 @@ const registrationPaymentStatusLabels: Record<RegistrationPaymentStatus, string>
   expired: "Expirado",
   error: "Erro",
   refunded: "Estornado",
+  not_required: "Não exigido",
 };
 
 const registrationStatusClassMap: Record<RegistrationStatus, string> = {
@@ -51,6 +52,7 @@ const paymentStatusClassMap: Record<RegistrationPaymentStatus, string> = {
   expired: "bg-slate-100 text-slate-700",
   error: "bg-red-100 text-red-700",
   refunded: "bg-slate-100 text-slate-700",
+  not_required: "bg-blue-100 text-blue-700",
 };
 
 export function RegistrationsTable({
@@ -64,8 +66,10 @@ export function RegistrationsTable({
 
   const pixMutation = useMutation({
     mutationFn: (registration: Registration) =>
-      createRegistrationPixPayment(registration.id, {
-        payer_email: registration.email ?? undefined,
+      createContractPixPayment({
+        contract_id: Number(contractId),
+        client_id: registration.id,
+        payer_email: registration.email ?? "",
         payer_name: registration.name,
         payer_document: registration.document ?? undefined,
       }),

@@ -128,9 +128,9 @@ export function PublicEventPage({ id }: PublicEventPageProps) {
                 </div>
               </div>
 
-              <Alert variant="info" title="Pagamento">
+              <Alert variant="info" title="Inscrição protegida">
                 <p>
-                  Após enviar a inscrição, o frontend chama o Pix público da inscrição e mostra QR Code, copia e cola ou link de pagamento OpenPix quando retornados pelo backend.
+                  O evento pode ser consultado sem login. Para se inscrever, a pessoa entra com uma conta de participante separada da conta do organizador. O backend deriva a identidade e o e-mail da sessão autenticada.
                 </p>
               </Alert>
             </CardContent>
@@ -141,11 +141,15 @@ export function PublicEventPage({ id }: PublicEventPageProps) {
           <CardHeader>
             <CardTitle>Inscrição</CardTitle>
             <CardDescription>
-              Preencha os dados do participante. Os campos adicionais são definidos pelo organizador.
+              Entre como participante para vincular a inscrição à sua conta. Os campos adicionais são definidos pelo organizador.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RegistrationForm contractId={event.id} fields={event.form_fields ?? []} />
+            <RegistrationForm
+              contractId={event.id}
+              fields={event.form_fields ?? []}
+              requiresPayment={Number(event.price) > 0}
+            />
           </CardContent>
         </Card>
       </div>

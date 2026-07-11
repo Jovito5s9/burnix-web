@@ -1,7 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { clearToken, getCurrentUser, login, register } from "@/services/auth";
+import {
+  getCurrentUser,
+  login,
+  logoutOrganizer,
+  register,
+} from "@/services/auth";
 import type { AuthUser, LoginPayload, RegisterPayload } from "@/types/auth";
 
 const adminRoles = new Set(["admin", "superuser", "super_user"]);
@@ -17,6 +22,7 @@ export function useAuth() {
     queryKey: ["auth", "me"],
     queryFn: getCurrentUser,
     retry: false,
+    staleTime: 60 * 1000,
   });
 
   const loginMutation = useMutation({
@@ -30,6 +36,13 @@ export function useAuth() {
     mutationFn: (payload: RegisterPayload) => register(payload),
   });
 
+  const logoutMutation = useMutation({
+    mutationFn: logoutOrganizer,
+    onSettled: () => {
+      queryClient.removeQueries({ queryKey: ["auth"] });
+    },
+  });
+
   const user = meQuery.data ?? null;
 
   return {
@@ -40,11 +53,9 @@ export function useAuth() {
     authError: meQuery.error,
     login: loginMutation.mutateAsync,
     register: registerMutation.mutateAsync,
+    logout: logoutMutation.mutateAsync,
     isLoggingIn: loginMutation.isPending,
     isRegistering: registerMutation.isPending,
-    logout: () => {
-      clearToken();
-      queryClient.removeQueries({ queryKey: ["auth", "me"] });
-    },
+    isLoggingOut: logoutMutation.isPending,
   };
 }

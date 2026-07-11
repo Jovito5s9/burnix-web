@@ -3,21 +3,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
-  createPublicRegistration,
-  createRegistrationPix,
-} from "@/services/public-contracts";
-import type { CreateRegistrationPixPayload } from "@/types/payment";
-import type { PublicRegistrationPayload } from "@/types/registration";
+  createParticipantRegistration,
+  createParticipantRegistrationPix,
+} from "@/services/participant-api";
+import type { ParticipantRegistrationCreatePayload } from "@/types/participant";
+import type { ParticipantPaymentCreatePayload } from "@/types/payment";
 
-export function useCreatePublicRegistration(contractId: string | number) {
+export function useCreateParticipantRegistration(contractId: string | number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: PublicRegistrationPayload) =>
-      createPublicRegistration(contractId, payload),
+    mutationFn: (payload: ParticipantRegistrationCreatePayload) =>
+      createParticipantRegistration(contractId, payload),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["public-contracts", contractId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["participant-registrations"],
       });
       await queryClient.invalidateQueries({
         queryKey: ["registrations", contractId],
@@ -29,32 +32,22 @@ export function useCreatePublicRegistration(contractId: string | number) {
   });
 }
 
-export function useCreatePublicRegistrationPix() {
+export function useCreateParticipantRegistrationPix() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      clientId,
+      registrationId,
       payload,
     }: {
-      clientId: string | number;
-      payload?: CreateRegistrationPixPayload;
-    }) => createRegistrationPix(clientId, payload ?? {}),
-    onSuccess: async (result) => {
-      const contractId = result.payment.contract_id;
+      registrationId: string | number;
+      payload?: ParticipantPaymentCreatePayload;
+    }) => createParticipantRegistrationPix(registrationId, payload ?? {}),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["participant-registrations"],
+      });
       await queryClient.invalidateQueries({ queryKey: ["payments"] });
-      await queryClient.invalidateQueries({
-        queryKey: ["public-contracts", contractId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["registrations", contractId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["contracts", contractId, "registrations"],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["contracts", contractId, "payments"],
-      });
     },
   });
 }

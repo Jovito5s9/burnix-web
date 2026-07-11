@@ -64,12 +64,6 @@ export type CreateContractCheckoutPayload = {
   idempotency_key?: string;
 };
 
-export type CreateRegistrationPixPayload = {
-  payer_email?: string;
-  payer_name?: string;
-  payer_document?: string;
-  idempotency_key?: string;
-};
 
 export type PaymentPixResponse = {
   payment: Payment;
@@ -83,3 +77,31 @@ export type PaymentListParams = {
   skip?: number;
   limit?: number;
 };
+
+
+export type ParticipantPaymentCreatePayload = {
+  idempotency_key?: string;
+};
+
+export type PublicPaymentRead = {
+  id: number;
+  registration_id: number;
+  attempt_number: number;
+  status: PaymentStatus;
+  amount: string;
+  currency: string;
+  checkout_url: string | null;
+  qr_code_base64: string | null;
+  copy_and_paste: string | null;
+  expires_at: string | null;
+};
+
+export type PublicPaymentNotRequired = {
+  registration_id: number;
+  status: "not_required";
+  message: string;
+};
+
+export type ParticipantPaymentResponse =
+  | PublicPaymentRead
+  | PublicPaymentNotRequired;

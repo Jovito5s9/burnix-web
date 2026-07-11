@@ -15,9 +15,9 @@ export type RegisterPayload = {
   password: string;
 };
 
+/** Resposta segura do BFF. O access token nunca é devolvido ao navegador. */
 export type LoginResponse = {
-  access_token: string;
-  token_type: string;
+  authenticated: true;
 };
 
 export type RegisterResponse = AuthUser;

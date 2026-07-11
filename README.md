@@ -1,329 +1,322 @@
 # Burnix Web
 
-Frontend oficial do Burnix, uma plataforma SaaS para gestão de eventos, inscrições, pagamentos Pix/OpenPix e cobranças.
+Frontend Next.js do Burnix, plataforma SaaS multi-organizador para eventos,
+inscrições e pagamentos Pix/OpenPix.
 
-O sistema foi desenvolvido para fornecer uma interface moderna, responsiva e segura para gerenciamento de eventos, acompanhamento de inscrições e visualização de transações financeiras processadas pelo backend Burnix.
+Esta versão implementa a **Etapa 1 do frontend: separação e proteção da sessão
+do participante**, alinhada ao backend Burnix `0.6.0` e às rotas autenticadas em
+`/participant/*`.
 
-> 🚧 Projeto em desenvolvimento ativo.
+## Estado atual
 
----
+### Sessões separadas
 
-## Funcionalidades
+O frontend mantém duas sessões independentes:
 
-### Autenticação
-
-- Login de usuários
-- Cadastro de usuários
-- Persistência de sessão com JWT Bearer
-- Proteção de rotas privadas
-- Controle de acesso ao sistema
-
-### Gestão de Eventos
-
-- Listagem paginada de eventos usando `skip` e `limit`
-- Criação de eventos pelo endpoint `POST /contracts/`
-- Visualização de detalhes do evento
-- Consulta dos status atuais do backend: `draft`, `published`, `closed` e `cancelled`
-- Exibição de capacidade, início, fim, prazo de inscrição, moeda e preço
-- Tratamento de `client_id` como campo legado e opcional
-
-### Inscrições / Participantes
-
-- Consulta de inscrições vinculadas ao evento usando `GET /contracts/{contract_id}/registrations`
-- Camada interna para clientes/inscrições usando `/clients/`
-- Componentes de listagem e detalhe de inscrições no painel do evento
-- Exibição de nome, e-mail, telefone, documento, status de inscrição, status de pagamento e campos extras
-- Botão para gerar Pix/OpenPix de uma inscrição usando `POST /payments/registrations/{client_id}/pix`
-- Página pública de evento em `/eventos/{contract_id}` usando `GET /public/contracts/{contract_id}`
-- Criação de inscrição pública usando `POST /public/contracts/{contract_id}/registrations`
-- Geração automática de Pix da inscrição pública usando `POST /payments/registrations/{client_id}/pix`
-- Exibição pública de QR Code, Pix copia e cola e link de pagamento OpenPix quando retornados pelo backend
-
-### Campos Dinâmicos de Formulário
-
-- Tipos e serviços para `/contracts/{contract_id}/form-fields/`
-- Listagem, criação, edição e remoção de campos no detalhe do evento
-- Suporte administrativo a `field_key`, `label`, `type`, `required`, `order`, `options` e `validation_rules`
-- Renderização pública de campos `text`, `email`, `number`, `date`, `select`, `radio`, `checkbox` e `multiselect`
-- Envio dos campos dinâmicos dentro de `extra_fields`
-- Exibição de erros `422` por campo quando o backend retorna `detail.errors`
-
-### Perfil de Cobrança
-
-- Página `/settings` com formulário real para perfil de cobrança do organizador
-- Consulta de perfil usando `GET /billing-profiles/me`
-- Tratamento de `404` como “perfil ainda não criado”
-- Criação/atualização usando `PUT /billing-profiles/me`
-- Campos de chave Pix, tipo da chave Pix, documento e nome do recebedor
-- Exibição do status de cobrança e plano atual no formulário
-- Resumo do perfil de cobrança na visão geral do dashboard
-
-### Exportações CSV
-
-- Exportação de inscrições do evento usando `GET /contracts/{contract_id}/export/registrations.csv`
-- Exportação de pagamentos do evento usando `GET /contracts/{contract_id}/export/payments.csv
-/admin/users
-/admin/contracts
-/admin/clients
-/admin/payments`
-- Downloads protegidos com Bearer token pelo interceptor da API
-- Uso de `responseType: "blob"` para baixar o arquivo CSV retornado pelo backend
-
-### Pagamentos Pix/OpenPix
-
-- Consulta global de pagamentos usando `GET /payments/`
-- Consulta de pagamento por ID usando `GET /payments/{payment_id}`
-- Consulta de pagamentos vinculados ao evento usando `GET /contracts/{contract_id}/payments`
-- Geração de cobrança Pix/OpenPix para evento usando `POST /payments/contracts/{contract_id}/pix`
-- Geração de cobrança Pix/OpenPix para inscrição usando `POST /payments/registrations/{client_id}/pix`
-- Compatibilidade técnica com a rota legada `POST /payments/contracts/{contract_id}/checkout`
-- Exibição de link de pagamento OpenPix, QR Code, código Pix copia e cola, provider, status detalhado, taxa da plataforma e valor líquido
-
-### Retornos de Pagamento
-
-- Página de sucesso em `/sucesso`
-- Página de falha em `/falha`
-- Página de pagamento pendente em `/pendente`
-- Textos atualizados para pagamento Pix/OpenPix
-- Páginas mantidas apenas como compatibilidade com retornos externos/legados
-
-Essas páginas não devem ser usadas como fonte definitiva de confirmação. A confirmação real do pagamento deve vir do webhook OpenPix processado pelo backend e depois ser acompanhada por `GET /payments/`, `GET /payments/{payment_id}` ou `GET /contracts/{contract_id}/payments`.
-
-### Painel Administrativo
-
-- Página `/admin` dentro do dashboard
-- Link Admin exibido apenas para usuários com role `admin`, `superuser` ou `super_user` retornada por `auth/me`
-- Consulta das rotas administrativas:
-  - `GET /admin/users`
-  - `GET /admin/contracts`
-  - `GET /admin/clients`
-  - `GET /admin/payments`
-- Tratamento de `403` como “sem permissão”
-- Paginação por `skip` e `limit`, com limite máximo de 500 respeitado no serviço
-
-### Integração com API
-
-- Comunicação com backend próprio
-- Consumo de endpoints REST sem prefixo global `/api/v1`
-- Tratamento de erros centralizado, incluindo erros `422` do FastAPI/Pydantic e validações de formulário dinâmico
-- Gerenciamento de cache com React Query
-- Mutations para criar, atualizar e excluir eventos
-- Mutations específicas para Pix/OpenPix de evento e de inscrição
-- Mutations para criar, atualizar e remover campos dinâmicos de formulário
-- Hooks e serviços para perfil de cobrança do organizador
-- Serviços de exportação CSV com download via Blob
-- Serviços e hooks administrativos para `/admin/users`, `/admin/contracts`, `/admin/clients` e `/admin/payments`
-- Fluxo público sem autenticação para evento, inscrição e Pix da inscrição
-
----
-
-## Stack Tecnológica
-
-### Frontend
-
-- Next.js com App Router
-- TypeScript
-- Tailwind CSS
-
-### Gerenciamento de Estado e Dados
-
-- TanStack Query
-- Axios
-
-### Infraestrutura
-
-- Vercel
-
----
-
-## Arquitetura
-
-Usuário <br>
-   │<br>
-   ▼<br>
-Next.js Frontend<br>
-   │<br>
-   ▼<br>
-Burnix API<br>
-   │<br>
-   ├── PostgreSQL<br>
-   ├── OpenPix / Pix<br>
-   └── Serviços Internos<br>
-
-O frontend é responsável pela experiência do usuário e comunicação com a API do Burnix, enquanto toda lógica de negócio, processamento financeiro, webhooks e integração com serviços externos permanece no backend.
-
-A API atual expõe as rotas diretamente na raiz do host, por exemplo:
-
-```txt
-/auth/login
-/auth/register
-/contracts/
-/contracts/{contract_id}/registrations
-/contracts/{contract_id}/payments
-/clients/
-/payments/
-/payments/contracts/{contract_id}/pix
-/payments/registrations/{client_id}/pix
-/public/contracts/{contract_id}
-/public/contracts/{contract_id}/registrations
-/contracts/{contract_id}/form-fields/
-/billing-profiles/me
-/contracts/{contract_id}/export/registrations.csv
-/contracts/{contract_id}/export/payments.csv
-/admin/users
-/admin/contracts
-/admin/clients
-/admin/payments
+```text
+Organizador  -> cookie burnix.access_token
+Participante -> cookie burnix.participant_access_token
 ```
 
-> Observação: o backend ainda usa o recurso técnico `Contract`, mas o frontend apresenta esse recurso como **Evento** para o usuário final. Por isso a rota continua `/contracts`, enquanto os textos da interface usam “Eventos”.
+Os dois cookies são criados por Route Handlers do Next.js e usam:
 
----
+```text
+HttpOnly
+SameSite=Lax
+Path=/
+Secure em produção
+```
 
-## Estrutura do Projeto
+O JWT não é salvo em `localStorage`, não é criado por JavaScript e não é
+devolvido pelas respostas do BFF ao navegador.
 
-```txt
+### BFF do Next.js
+
+O navegador chama somente endpoints do próprio frontend:
+
+```text
+POST /api/session/organizer/login
+POST /api/session/participant/login
+POST /api/session/participant/register
+POST /api/session/logout
+
+/api/backend/organizer/*
+/api/backend/participant/*
+/api/backend/public/*
+```
+
+Os Route Handlers leem o cookie `HttpOnly` correto no servidor e acrescentam o
+header `Authorization: Bearer ...` somente na chamada ao backend FastAPI.
+
+O BFF também:
+
+- bloqueia a troca de categoria de sessão;
+- não permite obter o token bruto pelas rotas proxy;
+- restringe os paths disponíveis para cada categoria;
+- rejeita mutações com origem diferente da aplicação;
+- remove o cookie correspondente quando o backend retorna `401`;
+- preserva respostas JSON, CSV e erros estruturados do backend;
+- devolve erro público controlado quando o backend está indisponível.
+
+### Fluxo do participante
+
+Rotas de interface:
+
+```text
+/participante/entrar
+/participante/cadastro
+/eventos/{contract_id}
+```
+
+Fluxo de inscrição:
+
+```text
+1. GET /public/contracts/{contract_id}
+2. Evento continua visível sem autenticação.
+3. Ao clicar em “Inscrever-se”, o frontend verifica a sessão do participante.
+4. Sem sessão, redireciona para:
+   /participante/entrar?next=/eventos/{contract_id}
+5. Após login ou cadastro, retorna ao evento.
+6. POST /participant/contracts/{contract_id}/registrations
+7. Para evento pago:
+   POST /participant/registrations/{registration_id}/payments/pix
+```
+
+O payload da inscrição contém somente dados permitidos pelo backend:
+
+```json
+{
+  "name": "Pessoa Participante",
+  "phone": "+5591999999999",
+  "document": "00000000000",
+  "sex": null,
+  "age": null,
+  "extra_fields": {}
+}
+```
+
+O frontend **não envia**:
+
+```text
+participant_id
+email
+owner_user_id
+```
+
+Esses valores são derivados pelo backend a partir do JWT do participante e do
+evento solicitado.
+
+Eventos gratuitos são confirmados sem tentativa de cobrança. Eventos pagos
+recebem a resposta pública reduzida, sem PII ou payload interno da OpenPix.
+
+### Sessão do organizador
+
+O login do organizador também foi migrado para o BFF:
+
+```text
+POST /api/session/organizer/login
+  -> backend POST /auth/login
+  -> cookie HttpOnly burnix.access_token
+```
+
+As chamadas do painel continuam usando as mesmas funções de serviço, mas agora
+passam por `/api/backend/organizer/*`. O navegador não lê nem monta o Bearer
+token.
+
+### Proteção de páginas
+
+O arquivo depreciado `middleware.ts` foi substituído por `proxy.ts`.
+
+Proteção atual:
+
+```text
+/dashboard/*
+/contracts/*
+/payments/*
+/settings/*
+/admin/*
+  -> exige burnix.access_token
+
+/participante/minhas-inscricoes/*
+  -> reservado para a sessão burnix.participant_access_token
+```
+
+A página pública `/eventos/*` permanece sem bloqueio de navegação.
+
+## Rotas do backend consumidas
+
+### Públicas
+
+```text
+GET /public/contracts/{contract_id}
+```
+
+### Autenticação do organizador
+
+```text
+POST /auth/register
+POST /auth/login
+GET  /auth/me
+```
+
+### Autenticação do participante
+
+```text
+POST /participant-auth/register
+POST /participant-auth/login
+GET  /participant-auth/me
+```
+
+### Área do participante
+
+```text
+GET  /participant/registrations
+GET  /participant/registrations/{registration_id}
+POST /participant/contracts/{contract_id}/registrations
+POST /participant/registrations/{registration_id}/payments/pix
+```
+
+### Painel do organizador
+
+O projeto também mantém os serviços existentes para eventos, inscrições,
+pagamentos, campos dinâmicos, perfil financeiro, integrações, exportações e
+administração global.
+
+A geração manual de Pix pelo organizador usa:
+
+```text
+POST /payments/contracts/{contract_id}/pix
+```
+
+com `client_id` no corpo. O frontend vigente não usa mais as rotas públicas
+legadas de inscrição e pagamento por `client_id`.
+
+## Estrutura relevante
+
+```text
 app/
 ├── (auth)/
 ├── (dashboard)/
-├── eventos/[id]/
-├── sucesso/
-├── falha/
-└── pendente/
-
-components/
-├── admin/
-├── dashboard/
-├── feedback/
-├── forms/
-├── layout/
-├── public/
-└── ui/
+├── (participant-auth)/participante/
+│   ├── entrar/page.tsx
+│   └── cadastro/page.tsx
+├── api/
+│   ├── backend/[session]/[...path]/route.ts
+│   └── session/
+│       ├── organizer/login/route.ts
+│       ├── participant/login/route.ts
+│       ├── participant/register/route.ts
+│       └── logout/route.ts
+└── eventos/[id]/
 
 hooks/
-lib/
+├── useAuth.ts
+└── useParticipantAuth.ts
+
 services/
+├── api.ts
+├── auth.ts
+├── participant-api.ts
+└── participant-auth.ts
+
 types/
-middleware.ts
+├── participant.ts
+└── participant-auth.ts
+
+lib/server/
+├── backend.ts
+└── session.ts
+
+proxy.ts
 ```
 
-## Diretórios Principais
+## Variáveis de ambiente
 
-- `app` — rotas, layouts e páginas
-- `components/ui` — componentes reutilizáveis
-- `components/admin` — visão administrativa para usuários, eventos, participantes e pagamentos
-- `components/dashboard` — telas e blocos do painel
-- `components/layout` — estrutura da aplicação
-- `components/forms` — formulários de autenticação e entrada de dados
-- `components/public` — página pública de evento, inscrição e pagamento Pix
-- `services` — comunicação HTTP com a API
-- `hooks` — React Query e lógica de consumo
-- `lib` — utilitários e configurações
-- `types` — tipagens compartilhadas
-- `middleware.ts` — proteção de rotas
-
----
-
-## Variáveis de Ambiente
-
-Crie um arquivo `.env.local`:
+Copie `.env.example` para `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+API_URL=http://localhost:8000
+# APP_ORIGIN=https://app.seudominio.com
 ```
 
-`NEXT_PUBLIC_CHECKOUT_PATH=/checkout` fazia parte do fluxo antigo de checkout externo e deve ser tratado como legado. O fluxo atual de pagamento usa Pix/OpenPix pelo backend.
+### `API_URL`
 
----
+URL privada usada pelo servidor Next.js para acessar o backend FastAPI.
+
+Em produção, prefira uma URL interna da infraestrutura. Não é necessário expor
+a URL do backend ao bundle do navegador.
+
+### `APP_ORIGIN`
+
+Opcional. Origem pública canônica usada como origem confiável adicional nas
+mutações do BFF, especialmente em ambientes com proxy reverso.
+
+Exemplo:
+
+```env
+APP_ORIGIN=https://app.seudominio.com
+```
+
+Em produção, a aplicação deve ser servida por HTTPS para que cookies com
+`Secure` sejam enviados pelo navegador.
 
 ## Instalação
 
-### Clonar o projeto
-
 ```bash
-git clone https://github.com/jovito5s9/burnix-web.git
-```
-
-### Instalar dependências
-
-```bash
-npm install
-```
-
-### Executar em desenvolvimento
-
-```bash
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-### A aplicação estará disponível em:
+Aplicação local:
 
-```txt
+```text
 http://localhost:3000
 ```
 
----
-
-## Scripts
-
-### Desenvolvimento
-
-```bash
-npm run dev
-```
-
-### Build de Produção
-
-```bash
-npm run build
-```
-
-### Executar Build
-
-```bash
-npm run start
-```
-
-### Lint
+## Validações
 
 ```bash
 npm run lint
-```
-
-### Verificação de Tipagem
-
-```bash
 npm run typecheck
+npm run build
+npm run test:bff
 ```
 
----
+`test:bff` deve ser executado depois do build. Ele inicia um backend simulado e
+uma instância de produção do Next.js para verificar:
 
-## Fluxo Principal Atual
+- cookie separado de participante;
+- cookie separado de organizador;
+- atributos `HttpOnly`, `Secure`, `SameSite=Lax` e `Path=/`;
+- ausência do JWT nas respostas ao navegador;
+- Bearer aplicado somente no servidor;
+- bloqueio de rota de outra categoria de sessão;
+- redirecionamento do dashboard quando existe apenas sessão de participante;
+- inscrição sem `participant_id` e sem `email` no payload;
+- criação de Pix pela rota autenticada do participante;
+- acesso público ao evento;
+- rejeição de origem cruzada em mutações;
+- logout seletivo por categoria de sessão.
 
-```txt
-Cadastro
-  ↓
-Login
-  ↓
-Dashboard
-  ↓
-Eventos (`/contracts`)
-  ↓
-Detalhe do evento
-  ↓
-Campos dinâmicos, inscrições, pagamentos vinculados e exportações CSV
-  ↓
-Configurações (`/settings`) para perfil de cobrança Pix
-  ↓
-Página pública (`/eventos/{contract_id}`)
-  ↓
-Inscrição pública
-  ↓
-Geração de cobrança Pix/OpenPix da inscrição
+Relatórios detalhados:
+
+```text
+docs/frontend-stage-1-participant-session.md
+docs/validation-stage-1.md
 ```
+
+## Auditoria de dependências
+
+Foi executado `npm audit fix` sem alterações incompatíveis. O audit final não
+aponta vulnerabilidades altas ou críticas. Permanecem dois avisos moderados
+associados ao PostCSS empacotado pelo Next.js estável `16.2.10`; o próprio npm
+oferece apenas um downgrade incompatível para Next.js 9 como correção automática,
+portanto essa opção não foi aplicada.
 
 ## Observação sobre datas de eventos
 
-Os campos `start_date`, `end_date` e `registration_deadline` do formulário de criação de eventos são enviados como data/hora local no formato `YYYY-MM-DDTHH:mm:ss`, sem conversão para UTC e sem sufixo `Z`. Isso evita o deslocamento automático de fuso horário causado por `Date.prototype.toISOString()` em campos `datetime-local`.
-
-O frontend também valida antes do envio que a data final seja posterior ao início e que o prazo de inscrição não seja posterior ao início do evento, evitando respostas `422` previsíveis do backend.
+Os campos `start_date`, `end_date` e `registration_deadline` continuam sendo
+enviados como data/hora local no formato `YYYY-MM-DDTHH:mm:ss`, sem conversão
+para UTC e sem sufixo `Z`. Isso evita deslocamento automático de fuso em campos
+`datetime-local`.

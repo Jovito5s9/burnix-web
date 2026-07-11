@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 import { DynamicRegistrationFields } from "@/components/public/dynamic-registration-fields";
 import { PixPaymentBox } from "@/components/public/pix-payment-box";
@@ -8,19 +9,32 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { useParticipantAuth } from "@/hooks/useParticipantAuth";
 import {
+  useCreateParticipantRegistration,
+  useCreateParticipantRegistrationPix,
+} from "@/hooks/usePublicRegistration";
+import {
+  ApiClientError,
   getApiFieldErrors,
   getErrorMessage,
   type ApiFieldErrors,
 } from "@/lib/get-error-message";
-import { useCreatePublicRegistration, useCreatePublicRegistrationPix } from "@/hooks/usePublicRegistration";
 import type { ContractFormField } from "@/types/form-field";
-import type { PaymentPixResponse } from "@/types/payment";
-import type { PublicRegistrationPayload, Registration } from "@/types/registration";
+import type { ParticipantRegistrationDetail } from "@/types/participant";
+import type { PublicPaymentRead } from "@/types/payment";
 
 type RegistrationFormProps = {
   contractId: string | number;
   fields: ContractFormField[];
+  requiresPayment: boolean;
+};
+
+type Feedback = {
+  variant: "info" | "success" | "warning" | "destructive";
+  title: string;
+  message: string;
 };
 
 function normalizeOptionalText(value: FormDataEntryValue | null) {
@@ -43,19 +57,36 @@ function hasValue(value: unknown) {
   return true;
 }
 
-export function RegistrationForm({ contractId, fields }: RegistrationFormProps) {
+export function RegistrationForm({
+  contractId,
+  fields,
+  requiresPayment,
+}: RegistrationFormProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const {
+    participant,
+    isLoadingParticipant,
+  } = useParticipantAuth();
   const sortedFields = useMemo(
     () => [...fields].sort((a, b) => a.order - b.order || a.id - b.id),
     [fields]
   );
-  const createRegistration = useCreatePublicRegistration(contractId);
-  const createPix = useCreatePublicRegistrationPix();
+  const createRegistration = useCreateParticipantRegistration(contractId);
+  const createPix = useCreateParticipantRegistrationPix();
 
   const [extraFields, setExtraFields] = useState<Record<string, unknown>>({});
   const [fieldErrors, setFieldErrors] = useState<ApiFieldErrors>({});
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [registration, setRegistration] = useState<Registration | null>(null);
-  const [pixResult, setPixResult] = useState<PaymentPixResponse | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [registration, setRegistration] =
+    useState<ParticipantRegistrationDetail | null>(null);
+  const [pixResult, setPixResult] = useState<PublicPaymentRead | null>(null);
+
+  function redirectToParticipantLogin() {
+    router.push(
+      `/participante/entrar?next=${encodeURIComponent(pathname || `/eventos/${contractId}`)}`
+    );
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,75 +95,135 @@ export function RegistrationForm({ contractId, fields }: RegistrationFormProps) 
     setPixResult(null);
     setRegistration(null);
 
+    if (!participant) {
+      redirectToParticipantLogin();
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
     const name = String(formData.get("name") ?? "").trim();
-    const email = normalizeOptionalText(formData.get("email"));
     const phone = normalizeOptionalText(formData.get("phone"));
     const document = normalizeOptionalText(formData.get("document"));
     const sex = normalizeOptionalText(formData.get("sex"));
     const age = normalizeAge(formData.get("age"));
 
-    if (!email) {
-      setFieldErrors({ email: "Informe um e-mail para receber e gerar o Pix da inscrição." });
-      setFeedback("Informe um e-mail válido para concluir a inscrição.");
-      return;
-    }
-
     const extraPayload = Object.fromEntries(
       Object.entries(extraFields).filter(([, value]) => hasValue(value))
     );
 
-    const payload: PublicRegistrationPayload = {
-      name,
-      email,
-      phone,
-      document,
-      sex,
-      age,
-      extra_fields: Object.keys(extraPayload).length > 0 ? extraPayload : {},
-    };
-
     try {
-      const createdRegistration = await createRegistration.mutateAsync(payload);
+      const createdRegistration = await createRegistration.mutateAsync({
+        name,
+        phone,
+        document,
+        sex,
+        age,
+        extra_fields: extraPayload,
+      });
       setRegistration(createdRegistration);
-      setFeedback("Inscrição criada com sucesso. Gerando cobrança Pix...");
 
-      const result = await createPix.mutateAsync({
-        clientId: createdRegistration.id,
-        payload: {
-          payer_email: email ?? undefined,
-          payer_name: name,
-          payer_document: document ?? undefined,
-        },
+      if (!requiresPayment || createdRegistration.payment_status === "not_required") {
+        setFeedback({
+          variant: "success",
+          title: "Inscrição confirmada",
+          message: "Sua inscrição foi confirmada. Este evento não exige pagamento.",
+        });
+        event.currentTarget.reset();
+        setExtraFields({});
+        return;
+      }
+
+      setFeedback({
+        variant: "info",
+        title: "Inscrição criada",
+        message: "Sua inscrição foi criada. Estamos gerando a cobrança Pix.",
       });
 
-      setPixResult(result);
-      setFeedback("Inscrição criada e Pix gerado com sucesso.");
+      const payment = await createPix.mutateAsync({
+        registrationId: createdRegistration.id,
+      });
+
+      if (payment.status === "not_required") {
+        setFeedback({
+          variant: "success",
+          title: "Inscrição confirmada",
+          message: payment.message,
+        });
+      } else {
+        setPixResult(payment);
+        setFeedback({
+          variant: "success",
+          title: "Pix gerado",
+          message: "Inscrição criada e pagamento Pix disponibilizado com sucesso.",
+        });
+      }
+
+      event.currentTarget.reset();
+      setExtraFields({});
     } catch (error) {
+      if (error instanceof ApiClientError && error.status === 401) {
+        redirectToParticipantLogin();
+        return;
+      }
+
       setFieldErrors(getApiFieldErrors(error));
-      setFeedback(
-        getErrorMessage(error, "Não foi possível concluir a inscrição pública.")
-      );
+      setFeedback({
+        variant: "destructive",
+        title: "Não foi possível concluir a inscrição",
+        message: getErrorMessage(
+          error,
+          "Não foi possível concluir a inscrição. Tente novamente."
+        ),
+      });
     }
+  }
+
+  if (isLoadingParticipant) {
+    return (
+      <div className="flex min-h-40 items-center justify-center">
+        <Spinner label="Verificando sua sessão de participante..." />
+      </div>
+    );
+  }
+
+  if (!participant) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="info" title="Entre para se inscrever">
+          <p>
+            O evento continua público, mas a inscrição precisa estar vinculada à sua conta de participante.
+          </p>
+        </Alert>
+        <Button className="w-full" onClick={redirectToParticipantLogin}>
+          Inscrever-se
+        </Button>
+        <p className="text-center text-xs text-slate-500">
+          Sua sessão de participante é separada da sessão do organizador.
+        </p>
+      </div>
+    );
   }
 
   const isPending = createRegistration.isPending || createPix.isPending;
 
   return (
     <div className="space-y-6">
+      <Alert variant="info" title="Participante autenticado">
+        <p>
+          A inscrição será vinculada a <strong>{participant.email}</strong>. O e-mail e a identidade não são enviados pelo formulário.
+        </p>
+      </Alert>
+
       {feedback ? (
-        <Alert
-          variant={feedback.includes("sucesso") ? "success" : "warning"}
-          title="Inscrição"
-        >
-          <p>{feedback}</p>
+        <Alert variant={feedback.variant} title={feedback.title}>
+          <p>{feedback.message}</p>
         </Alert>
       ) : null}
 
       {registration ? (
         <Alert variant="info" title="Inscrição registrada">
           <p>
-            Sua inscrição #{registration.id} foi criada com status {registration.registration_status}.
+            Inscrição #{registration.id} · Status {registration.registration_status} · Pagamento {registration.payment_status}.
           </p>
         </Alert>
       ) : null}
@@ -148,16 +239,6 @@ export function RegistrationForm({ contractId, fields }: RegistrationFormProps) 
             <Input id="name" name="name" placeholder="Seu nome" required />
             {fieldErrors.name ? (
               <p className="text-xs font-medium text-red-600">{fieldErrors.name}</p>
-            ) : null}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              E-mail <span className="text-red-600">*</span>
-            </Label>
-            <Input id="email" name="email" type="email" placeholder="voce@email.com" required />
-            {fieldErrors.email ? (
-              <p className="text-xs font-medium text-red-600">{fieldErrors.email}</p>
             ) : null}
           </div>
 
@@ -187,7 +268,7 @@ export function RegistrationForm({ contractId, fields }: RegistrationFormProps) 
 
           <div className="space-y-2">
             <Label htmlFor="age">Idade</Label>
-            <Input id="age" name="age" inputMode="numeric" type="number" min={0} />
+            <Input id="age" name="age" inputMode="numeric" type="number" min={0} max={130} />
             {fieldErrors.age ? (
               <p className="text-xs font-medium text-red-600">{fieldErrors.age}</p>
             ) : null}
@@ -210,7 +291,11 @@ export function RegistrationForm({ contractId, fields }: RegistrationFormProps) 
         />
 
         <Button className="w-full" type="submit" disabled={isPending}>
-          {isPending ? "Processando inscrição..." : "Enviar inscrição e gerar Pix"}
+          {isPending
+            ? "Processando inscrição..."
+            : requiresPayment
+              ? "Enviar inscrição e gerar Pix"
+              : "Confirmar inscrição gratuita"}
         </Button>
       </form>
     </div>

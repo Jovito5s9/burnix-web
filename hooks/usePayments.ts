@@ -4,14 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   createContractPixPayment,
-  createRegistrationPixPayment,
   getPayment,
   listPayments,
 } from "@/services/payments";
 
 import type {
   CreateContractPixPayload,
-  CreateRegistrationPixPayload,
   PaymentListParams,
 } from "@/types/payment";
 
@@ -69,43 +67,6 @@ export function useCreateContractPixPayment() {
       await queryClient.invalidateQueries({
         queryKey: ["contracts", variables.contract_id, "registrations"],
       });
-    },
-  });
-}
-
-export function useCreateRegistrationPixPayment(clientId?: string | number) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: CreateRegistrationPixPayload = {}) => {
-      if (!clientId) {
-        throw new Error("Inscrição não informada para gerar o Pix.");
-      }
-
-      return createRegistrationPixPayment(clientId, payload);
-    },
-    onSettled: async (data) => {
-      const contractId = data?.payment.contract_id;
-
-      await queryClient.invalidateQueries({ queryKey: ["payments"] });
-
-      if (contractId) {
-        await queryClient.invalidateQueries({
-          queryKey: ["payments", "contract", contractId],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["contracts", contractId],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["contracts", contractId, "payments"],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["registrations", contractId],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["contracts", contractId, "registrations"],
-        });
-      }
     },
   });
 }
