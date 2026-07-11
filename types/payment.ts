@@ -5,6 +5,7 @@ export type PaymentStatus =
   | "error"
   | "refunded";
 
+/** Visão interna, restrita às telas autenticadas do organizador. */
 export type Payment = {
   id: number;
   owner_user_id: number;
@@ -83,6 +84,7 @@ export type ParticipantPaymentCreatePayload = {
   idempotency_key?: string;
 };
 
+/** Resposta pública segura: não contém PII, correlação ou IDs do gateway. */
 export type PublicPaymentRead = {
   id: number;
   registration_id: number;

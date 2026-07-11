@@ -1,56 +1,42 @@
 import Link from "next/link";
+
+import { Container } from "@/components/layout/container";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/layout/container";
 
 type PageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function getValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
+function getRegistrationHref(value: string | string[] | undefined) {
+  const registrationId = Array.isArray(value) ? value[0] : value;
+  return registrationId && /^\d+$/.test(registrationId)
+    ? `/minhas-inscricoes/${registrationId}`
+    : null;
 }
 
-export default function Page({ searchParams }: PageProps) {
-  const paymentId = getValue(searchParams?.payment_id);
-  const contractId = getValue(searchParams?.contract_id);
-  const checkoutId = getValue(searchParams?.checkout_id);
-  const correlationId = getValue(searchParams?.correlation_id);
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const registrationHref = getRegistrationHref(params.registration_id);
 
   return (
     <section className="py-16">
       <Container className="max-w-2xl">
-        <Alert variant="success" title="Retorno de pagamento Pix recebido">
-          <div className="space-y-2">
-            <p>
-              Esta página existe apenas para compatibilidade com retornos externos. O pagamento Pix/OpenPix
-              só deve ser considerado confirmado depois que o backend processar o webhook da OpenPix.
-            </p>
-            <p>
-              Consulte a confirmação real em <strong>Pagamentos</strong> ou no detalhe do evento.
-            </p>
-            {paymentId || contractId || checkoutId || correlationId ? (
-              <p className="text-sm text-green-900/80">
-                {paymentId ? `Pagamento: ${paymentId}. ` : ""}
-                {contractId ? `Evento: ${contractId}. ` : ""}
-                {checkoutId ? `Referência legada: ${checkoutId}. ` : ""}
-                {correlationId ? `Correlação OpenPix: ${correlationId}.` : ""}
-              </p>
-            ) : null}
-          </div>
+        <Alert variant="success" title="Pagamento recebido para confirmação">
+          <p>
+            Acompanhe o status real na sua inscrição. A confirmação será exibida
+            assim que o pagamento for reconhecido.
+          </p>
         </Alert>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button asChild>
-            <Link href="/payments">Ver pagamentos</Link>
-          </Button>
-          {contractId ? (
-            <Button variant="secondary" asChild>
-              <Link href={`/contracts/${contractId}`}>Abrir evento</Link>
+          {registrationHref ? (
+            <Button asChild>
+              <Link href={registrationHref}>Ver minha inscrição</Link>
             </Button>
           ) : null}
-          <Button variant="secondary" asChild>
-            <Link href="/dashboard">Ir para o dashboard</Link>
+          <Button variant={registrationHref ? "secondary" : "primary"} asChild>
+            <Link href="/minhas-inscricoes">Minhas inscrições</Link>
           </Button>
         </div>
       </Container>

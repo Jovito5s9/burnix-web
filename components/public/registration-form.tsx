@@ -15,6 +15,7 @@ import { useParticipantAuth } from "@/hooks/useParticipantAuth";
 import {
   useCreateParticipantRegistration,
   useCreateParticipantRegistrationPix,
+  usePollParticipantRegistrationPayment,
   useRecoverParticipantRegistration,
 } from "@/hooks/usePublicRegistration";
 import {
@@ -129,6 +130,20 @@ export function RegistrationForm({
   const [paymentError, setPaymentError] = useState<unknown>(null);
   const [recoveryError, setRecoveryError] = useState<unknown>(null);
 
+  const paymentStatusForPolling =
+    paymentResult?.status ??
+    registration?.latest_payment?.status ??
+    registration?.payment_status;
+  const shouldPollPayment = Boolean(
+    registration && paymentStatusForPolling === "pending"
+  );
+  const registrationPolling = usePollParticipantRegistrationPayment(
+    registration?.id,
+    shouldPollPayment
+  );
+  const currentRegistration = registrationPolling.data ?? registration;
+
+
   function redirectToParticipantLogin() {
     router.push(
       `/participante/entrar?next=${encodeURIComponent(pathname || `/eventos/${contractId}`)}`
@@ -177,14 +192,17 @@ export function RegistrationForm({
     const paymentAttempt = getStablePaymentAttempt(registrationId);
 
     try {
-      const result = await createPix.mutateAsync(paymentAttempt);
+      const result = await createPix.mutateAsync({
+        registrationId: paymentAttempt.registrationId,
+        payload: { idempotency_key: paymentAttempt.idempotencyKey },
+      });
       paymentAttemptRef.current = null;
       setPaymentResult(result);
 
       if (result.status === "not_required") {
         setFeedback({
           variant: "success",
-          title: "Inscrição confirmada",
+          title: "Este evento é gratuito",
           message: result.message,
         });
       } else if (result.status === "paid") {
@@ -195,9 +213,9 @@ export function RegistrationForm({
         });
       } else {
         setFeedback({
-          variant: "success",
-          title: "Pix disponível",
-          message: "Continue o pagamento usando os dados abaixo.",
+          variant: "info",
+          title: "Aguardando pagamento",
+          message: "Use o QR Code ou o código Pix abaixo para concluir.",
         });
       }
     } catch (error) {
@@ -209,9 +227,9 @@ export function RegistrationForm({
       setPaymentError(error);
       setFeedback({
         variant: "warning",
-        title: "Sua inscrição foi preservada",
+        title: "Não foi possível gerar o Pix",
         message:
-          "Não foi possível concluir a geração do Pix agora. Não envie o formulário novamente; retome o pagamento abaixo.",
+          "Sua inscrição foi preservada. Não envie o formulário novamente; gere uma nova cobrança abaixo.",
       });
 
       const context = recoveryContext ?? {
@@ -318,8 +336,8 @@ export function RegistrationForm({
     ) {
       setFeedback({
         variant: "success",
-        title: "Inscrição confirmada",
-        message: "Sua inscrição foi confirmada. Este evento não exige pagamento.",
+        title: "Este evento é gratuito",
+        message: "Sua inscrição foi confirmada e não exige pagamento.",
       });
       return;
     }
@@ -380,26 +398,27 @@ export function RegistrationForm({
         </Alert>
       ) : null}
 
-      {registration ? (
+      {currentRegistration ? (
         <Alert variant="info" title="Inscrição localizada">
           <p>
-            Inscrição #{registration.id} · {" "}
+            Inscrição #{currentRegistration.id} · {" "}
             {getParticipantRegistrationStatusLabel(
-              registration.registration_status
+              currentRegistration.registration_status
             )} · Pagamento {" "}
-            {getParticipantPaymentStatusLabel(registration.payment_status)}.
+            {getParticipantPaymentStatusLabel(currentRegistration.payment_status)}.
           </p>
         </Alert>
       ) : null}
 
-      {registration ? (
+      {currentRegistration ? (
         <PixPaymentBox
-          registration={registration}
+          registration={currentRegistration}
           result={paymentResult}
           canResumePayment={recoveryContext?.canResumePayment ?? true}
           isGenerating={createPix.isPending}
           generationError={paymentError}
-          onGeneratePix={() => generatePixForRegistration(registration.id)}
+          isRefreshingStatus={registrationPolling.isFetching}
+          onGeneratePix={() => generatePixForRegistration(currentRegistration.id)}
         />
       ) : null}
 
@@ -440,10 +459,10 @@ export function RegistrationForm({
         </div>
       ) : null}
 
-      {registration ? (
+      {currentRegistration ? (
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="secondary">
-            <Link href={`/minhas-inscricoes/${registration.id}`}>
+            <Link href={`/minhas-inscricoes/${currentRegistration.id}`}>
               Ver inscrição completa
             </Link>
           </Button>

@@ -4,10 +4,6 @@ import type {
   ParticipantRegistrationCreatePayload,
   ParticipantRegistrationDetail,
 } from "@/types/participant-registration";
-import type {
-  ParticipantPaymentCreatePayload,
-  ParticipantPaymentResponse,
-} from "@/types/payment";
 import type { PublicContract } from "@/types/public-contract";
 
 export async function getPublicContract(contractId: string | number) {
@@ -34,25 +30,12 @@ export async function createPublicEventRegistration(
   return data;
 }
 
-/** Recupera uma inscrição já existente para continuar o fluxo público. */
+/** Recupera a fonte de verdade da inscrição autenticada. */
 export async function getPublicEventRegistration(
   registrationId: string | number
 ) {
   const { data } = await participantApi.get<ParticipantRegistrationDetail>(
     `/participant/registrations/${registrationId}`
-  );
-
-  return data;
-}
-
-/** Gera ou reutiliza a tentativa Pix autorizada da inscrição autenticada. */
-export async function generatePublicEventRegistrationPix(
-  registrationId: string | number,
-  payload: ParticipantPaymentCreatePayload
-) {
-  const { data } = await participantApi.post<ParticipantPaymentResponse>(
-    `/participant/registrations/${registrationId}/payments/pix`,
-    payload
   );
 
   return data;

@@ -9,6 +9,7 @@ Esta versão contém:
 Etapa 1 — separação e proteção da sessão do participante
 Etapa 2 — área “Minhas inscrições”
 Etapa 3 — recuperação de duplicidade e retomada idempotente do pagamento
+Etapa 4 — cobrança Pix segura e polling do status da inscrição
 ```
 
 A implementação está alinhada ao backend Burnix `0.6.0` e às rotas autenticadas
@@ -35,8 +36,10 @@ Fluxo principal:
 4. Eventos pagos geram Pix pela rota autenticada do participante.
 5. Um conflito de inscrição recupera o registration_id existente.
 6. O pagamento atual é carregado e pode ser retomado conforme o status.
-7. “Minhas inscrições” lista eventos, status, valor e ações de pagamento.
-8. O detalhe mostra os dados da própria inscrição e o painel Pix.
+7. A cobrança pendente inicia polling de 4,5 segundos no detalhe da inscrição.
+8. O polling para em estados finais, após três minutos ou com a aba inativa.
+9. “Minhas inscrições” lista eventos, status, valor e ações de pagamento.
+10. O detalhe mostra os dados da própria inscrição e o painel Pix.
 ```
 
 ## Sessões separadas
@@ -121,6 +124,11 @@ POST /participant/registrations/{registration_id}/payments/pix
 
 A rota pode reutilizar uma tentativa pendente ou paga e criar nova tentativa
 após `expired` ou `error`, conforme decisão final do backend.
+
+Enquanto o status está `pending`, o frontend consulta somente o detalhe da
+inscrição a cada 4,5 segundos, por no máximo três minutos. O polling é suspenso
+quando a aba fica inativa e nunca consulta `/payments/{id}`. O AppID e demais
+credenciais OpenPix não existem em variáveis públicas do frontend.
 
 ## Duplicidade e retomada
 
@@ -210,6 +218,7 @@ npm run typecheck
 npm run lint
 npm run build
 npm run test:bff
+npm run test:stage4
 ```
 
 Relatórios detalhados:
@@ -221,4 +230,6 @@ docs/frontend-stage-2-participant-registrations.md
 docs/validation-stage-2.md
 docs/frontend-stage-3-registration-duplicate-recovery.md
 docs/validation-stage-3.md
+docs/frontend-stage-4-openpix-participant-flow.md
+docs/validation-stage-4.md
 ```

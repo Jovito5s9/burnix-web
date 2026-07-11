@@ -209,7 +209,10 @@ export function ParticipantRegistrationDetail({ id }: ParticipantRegistrationDet
             </CardContent>
           </Card>
 
-          <PaymentStatusPanel registration={registration} />
+          <PaymentStatusPanel
+            registration={registration}
+            isRefreshingStatus={query.isFetching}
+          />
         </div>
       </Container>
     </section>

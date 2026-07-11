@@ -2,22 +2,20 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { isApiNetworkError } from "@/lib/get-error-message";
+import { useCreateParticipantRegistrationPixPayment } from "@/hooks/usePayments";
+import { useParticipantPaymentPolling } from "@/hooks/useParticipantPaymentPolling";
+import {
+  participantRegistrationDetailKey,
+  participantRegistrationsKey,
+} from "@/lib/participant-registration-query";
 import {
   createPublicEventRegistration,
-  generatePublicEventRegistrationPix,
   getPublicEventRegistration,
 } from "@/services/public-contracts";
 import type {
   ParticipantRegistrationCreatePayload,
   ParticipantRegistrationDetail,
 } from "@/types/participant-registration";
-
-const participantRegistrationsKey = ["participant-registrations"] as const;
-
-function participantRegistrationDetailKey(id: string | number) {
-  return [...participantRegistrationsKey, "detail", String(id)] as const;
-}
 
 async function invalidateRegistrationQueries(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -85,29 +83,12 @@ export function useRecoverParticipantRegistration() {
 }
 
 export function useCreateParticipantRegistrationPix() {
-  const queryClient = useQueryClient();
+  return useCreateParticipantRegistrationPixPayment();
+}
 
-  return useMutation({
-    mutationFn: ({
-      registrationId,
-      idempotencyKey,
-    }: {
-      registrationId: string | number;
-      idempotencyKey: string;
-    }) =>
-      generatePublicEventRegistrationPix(registrationId, {
-        idempotency_key: idempotencyKey,
-      }),
-    retry: (failureCount, error) =>
-      isApiNetworkError(error) && failureCount < 2,
-    retryDelay: (attemptIndex) => Math.min(750 * 2 ** attemptIndex, 3_000),
-    onSuccess: async (_result, variables) => {
-      await invalidateRegistrationQueries(
-        queryClient,
-        undefined,
-        variables.registrationId
-      );
-      await queryClient.invalidateQueries({ queryKey: ["payments"] });
-    },
-  });
+export function usePollParticipantRegistrationPayment(
+  registrationId: string | number | null | undefined,
+  enabled = true
+) {
+  return useParticipantPaymentPolling(registrationId, enabled);
 }

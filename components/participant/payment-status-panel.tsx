@@ -19,16 +19,13 @@ import {
   getParticipantPaymentStatusLabel,
 } from "@/lib/format";
 import { getErrorMessage, isApiNetworkError } from "@/lib/get-error-message";
+import { isPublicPaymentRead } from "@/lib/participant-registration-query";
 import type { ParticipantRegistrationDetail } from "@/types/participant-registration";
-import type { ParticipantPaymentResponse, PublicPaymentRead } from "@/types/payment";
 
 type PaymentStatusPanelProps = {
   registration: ParticipantRegistrationDetail;
+  isRefreshingStatus?: boolean;
 };
-
-function isPaymentRead(result: ParticipantPaymentResponse): result is PublicPaymentRead {
-  return result.status !== "not_required";
-}
 
 function getQrImageSrc(qrCodeBase64: string) {
   return qrCodeBase64.startsWith("data:image")
@@ -36,7 +33,10 @@ function getQrImageSrc(qrCodeBase64: string) {
     : `data:image/png;base64,${qrCodeBase64}`;
 }
 
-export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
+export function PaymentStatusPanel({
+  registration,
+  isRefreshingStatus = false,
+}: PaymentStatusPanelProps) {
   const generatePix = useGenerateParticipantRegistrationPix();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
@@ -50,7 +50,11 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
     (!payment || paymentStatus === "expired" || paymentStatus === "error");
 
   useEffect(() => {
-    if (paymentStatus === "paid" || paymentStatus === "not_required" || paymentStatus === "pending" && payment) {
+    if (
+      paymentStatus === "paid" ||
+      paymentStatus === "not_required" ||
+      (paymentStatus === "pending" && payment)
+    ) {
       paymentAttemptKeyRef.current = null;
     }
   }, [payment, paymentStatus]);
@@ -69,20 +73,19 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
       });
       paymentAttemptKeyRef.current = null;
 
-      if (isPaymentRead(result)) {
+      if (isPublicPaymentRead(result)) {
         setSuccessMessage(
           result.status === "paid"
             ? "Pagamento confirmado."
-            : "Pix disponível para conclusão do pagamento."
+            : "Cobrança Pix disponível. A confirmação será atualizada automaticamente."
         );
       } else {
-        setSuccessMessage(result.message);
+        setSuccessMessage("Este evento é gratuito.");
       }
     } catch (error) {
       if (!isApiNetworkError(error)) {
         paymentAttemptKeyRef.current = null;
       }
-      // O erro seguro do backend é exibido no painel.
     }
   }
 
@@ -93,7 +96,9 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
       await navigator.clipboard.writeText(payment.copy_and_paste);
       setCopyFeedback("Código Pix copiado.");
     } catch {
-      setCopyFeedback("Não foi possível copiar automaticamente. Selecione o código abaixo.");
+      setCopyFeedback(
+        "Não foi possível copiar automaticamente. Selecione o código abaixo."
+      );
     }
   }
 
@@ -104,7 +109,7 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
           <div>
             <CardTitle>Pagamento</CardTitle>
             <CardDescription>
-              O status é atualizado pelo backend após a confirmação da OpenPix.
+              O status é consultado automaticamente enquanto a cobrança está pendente.
             </CardDescription>
           </div>
           <Badge
@@ -131,32 +136,32 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
         ) : null}
 
         {paymentStatus === "not_required" ? (
-          <Alert variant="success" title="Pagamento não necessário">
-            <p>Este evento é gratuito e sua inscrição está confirmada.</p>
+          <Alert variant="success" title="Este evento é gratuito">
+            <p>Sua inscrição está confirmada e não exige pagamento.</p>
           </Alert>
         ) : null}
 
         {paymentStatus === "pending" ? (
-          <Alert variant="info" title="Pagamento pendente">
-            <p>Use o link, o QR Code ou o código Pix para concluir o pagamento.</p>
+          <Alert variant="info" title="Aguardando pagamento">
+            <p>Use o QR Code ou o código Pix para concluir.</p>
           </Alert>
         ) : null}
 
         {paymentStatus === "expired" ? (
-          <Alert variant="warning" title="O Pix anterior expirou">
-            <p>Gere uma nova cobrança para continuar, caso a inscrição ainda permita pagamento.</p>
+          <Alert variant="warning" title="Este Pix expirou. Gere uma nova cobrança">
+            <p>Sua inscrição foi preservada e pode receber uma nova tentativa.</p>
           </Alert>
         ) : null}
 
         {paymentStatus === "error" ? (
-          <Alert variant="warning" title="O Pix não pôde ser gerado">
-            <p>Você pode tentar novamente. O backend criará uma nova tentativa quando permitido.</p>
+          <Alert variant="warning" title="Não foi possível gerar o Pix">
+            <p>Sua inscrição foi preservada. Tente gerar uma nova cobrança.</p>
           </Alert>
         ) : null}
 
         {paymentStatus === "refunded" ? (
           <Alert variant="warning" title="Pagamento estornado">
-            <p>Este pagamento foi estornado. Consulte o status da inscrição acima.</p>
+            <p>Consulte o status atual da inscrição.</p>
           </Alert>
         ) : null}
 
@@ -170,7 +175,9 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
             </div>
             <div>
               <p className="text-slate-500">Tentativa</p>
-              <p className="font-semibold text-slate-950">{payment.attempt_number}</p>
+              <p className="font-semibold text-slate-950">
+                {payment.attempt_number}
+              </p>
             </div>
             {payment.expires_at ? (
               <div className="sm:col-span-2">
@@ -213,7 +220,9 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
             <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-slate-950 p-3 text-xs text-white">
               {payment.copy_and_paste}
             </pre>
-            {copyFeedback ? <p className="text-xs text-slate-600">{copyFeedback}</p> : null}
+            {copyFeedback ? (
+              <p className="text-xs text-slate-600">{copyFeedback}</p>
+            ) : null}
           </div>
         ) : null}
 
@@ -222,9 +231,9 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
             {generatePix.isPending
               ? "Gerando Pix..."
               : paymentStatus === "expired"
-                ? "Gerar novo Pix"
+                ? "Gerar nova cobrança"
                 : paymentStatus === "error"
-                  ? "Tentar gerar Pix novamente"
+                  ? "Tentar novamente"
                   : "Gerar Pix"}
           </Button>
         ) : null}
@@ -236,14 +245,22 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
         ) : null}
 
         {generatePix.error ? (
-          <Alert variant="destructive" title="Não foi possível gerar o pagamento">
+          <Alert variant="destructive" title="Não foi possível gerar o Pix">
             <p>
               {getErrorMessage(
                 generatePix.error,
-                "Não foi possível gerar o pagamento agora. Tente novamente."
+                "Não foi possível gerar o Pix agora. Tente novamente."
               )}
             </p>
           </Alert>
+        ) : null}
+
+        {paymentStatus === "pending" ? (
+          <p className="text-xs text-slate-500" aria-live="polite">
+            {isRefreshingStatus
+              ? "Atualizando a confirmação do pagamento..."
+              : "A confirmação será atualizada automaticamente."}
+          </p>
         ) : null}
       </CardContent>
     </Card>

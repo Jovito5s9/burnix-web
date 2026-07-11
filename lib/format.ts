@@ -121,12 +121,12 @@ export function getParticipantPaymentStatusLabel(
   status: ParticipantRegistrationPaymentStatus
 ) {
   const labels: Record<ParticipantRegistrationPaymentStatus, string> = {
-    pending: "Pendente",
-    paid: "Pago",
-    expired: "Expirado",
-    error: "Falha ao gerar",
-    refunded: "Estornado",
-    not_required: "Não necessário",
+    pending: "Aguardando pagamento",
+    paid: "Pagamento confirmado",
+    expired: "Este Pix expirou. Gere uma nova cobrança",
+    error: "Não foi possível gerar o Pix",
+    refunded: "Pagamento estornado",
+    not_required: "Este evento é gratuito",
   };
 
   return labels[status];

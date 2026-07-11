@@ -1,57 +1,42 @@
 import Link from "next/link";
+
+import { Container } from "@/components/layout/container";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/layout/container";
 
 type PageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function getValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
+function getRegistrationHref(value: string | string[] | undefined) {
+  const registrationId = Array.isArray(value) ? value[0] : value;
+  return registrationId && /^\d+$/.test(registrationId)
+    ? `/minhas-inscricoes/${registrationId}`
+    : null;
 }
 
-export default function Page({ searchParams }: PageProps) {
-  const paymentId = getValue(searchParams?.payment_id);
-  const contractId = getValue(searchParams?.contract_id);
-  const checkoutId = getValue(searchParams?.checkout_id);
-  const correlationId = getValue(searchParams?.correlation_id);
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const registrationHref = getRegistrationHref(params.registration_id);
 
   return (
     <section className="py-16">
       <Container className="max-w-2xl">
-        <Alert variant="warning" title="Pagamento Pix pendente">
-          <div className="space-y-2">
-            <p>
-              O retorno externo indicou pendência, mas a confirmação definitiva depende do webhook OpenPix
-              recebido e processado pelo backend.
-            </p>
-            <p>
-              Reconsulte o pagamento em alguns instantes por <strong>GET /payments/</strong>,
-              <strong> GET /payments/{"{payment_id}"}</strong> ou pelo detalhe do evento.
-            </p>
-            {paymentId || contractId || checkoutId || correlationId ? (
-              <p className="text-sm text-amber-900/80">
-                {paymentId ? `Pagamento: ${paymentId}. ` : ""}
-                {contractId ? `Evento: ${contractId}. ` : ""}
-                {checkoutId ? `Referência legada: ${checkoutId}. ` : ""}
-                {correlationId ? `Correlação OpenPix: ${correlationId}.` : ""}
-              </p>
-            ) : null}
-          </div>
+        <Alert variant="warning" title="Aguardando pagamento">
+          <p>
+            A confirmação pode levar alguns instantes. O status será atualizado
+            automaticamente nos detalhes da sua inscrição.
+          </p>
         </Alert>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button asChild>
-            <Link href="/payments">Consultar pagamentos</Link>
-          </Button>
-          {contractId ? (
-            <Button variant="secondary" asChild>
-              <Link href={`/contracts/${contractId}`}>Abrir evento</Link>
+          {registrationHref ? (
+            <Button asChild>
+              <Link href={registrationHref}>Acompanhar minha inscrição</Link>
             </Button>
           ) : null}
-          <Button variant="secondary" asChild>
-            <Link href="/dashboard">Ir para o dashboard</Link>
+          <Button variant={registrationHref ? "secondary" : "primary"} asChild>
+            <Link href="/minhas-inscricoes">Minhas inscrições</Link>
           </Button>
         </div>
       </Container>

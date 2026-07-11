@@ -1,14 +1,18 @@
 import { api } from "@/services/api";
+import { participantApi } from "@/services/participant-api";
 import type {
   CreateContractCheckoutPayload,
   CreateContractPixPayload,
+  ParticipantPaymentCreatePayload,
+  ParticipantPaymentResponse,
   Payment,
   PaymentListParams,
   PaymentPixResponse,
 } from "@/types/payment";
 
 function normalizePaymentPixResponse(data: unknown): PaymentPixResponse {
-  const record = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
+  const record =
+    data && typeof data === "object" ? (data as Record<string, unknown>) : {};
   const payment = record.payment as Payment | undefined;
 
   if (!payment) {
@@ -17,15 +21,21 @@ function normalizePaymentPixResponse(data: unknown): PaymentPixResponse {
 
   return {
     payment,
-    checkout_url: typeof record.checkout_url === "string" ? record.checkout_url : null,
+    checkout_url:
+      typeof record.checkout_url === "string" ? record.checkout_url : null,
     qr_code: typeof record.qr_code === "string" ? record.qr_code : null,
     qr_code_base64:
-      typeof record.qr_code_base64 === "string" ? record.qr_code_base64 : null,
+      typeof record.qr_code_base64 === "string"
+        ? record.qr_code_base64
+        : null,
     copy_and_paste:
-      typeof record.copy_and_paste === "string" ? record.copy_and_paste : null,
+      typeof record.copy_and_paste === "string"
+        ? record.copy_and_paste
+        : null,
   };
 }
 
+/** Rotas internas do organizador. Nunca são usadas pelo fluxo público. */
 export async function listPayments(params?: PaymentListParams) {
   const { data } = await api.get<Payment[]>("/payments/", { params });
   return data;
@@ -36,7 +46,9 @@ export async function getPayment(id: string | number) {
   return data;
 }
 
-export async function createContractPixPayment(payload: CreateContractPixPayload) {
+export async function createContractPixPayment(
+  payload: CreateContractPixPayload
+) {
   const { contract_id, ...body } = payload;
   const { data } = await api.post<unknown>(
     `/payments/contracts/${contract_id}/pix`,
@@ -58,3 +70,18 @@ export async function createContractCheckoutPayment(
   return normalizePaymentPixResponse(data);
 }
 
+/**
+ * Rota segura da área do participante. O AppID e qualquer credencial OpenPix
+ * permanecem exclusivamente no backend.
+ */
+export async function createParticipantRegistrationPixPayment(
+  registrationId: string | number,
+  payload: ParticipantPaymentCreatePayload = {}
+) {
+  const { data } = await participantApi.post<ParticipantPaymentResponse>(
+    `/participant/registrations/${registrationId}/payments/pix`,
+    payload
+  );
+
+  return data;
+}

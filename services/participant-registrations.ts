@@ -1,9 +1,9 @@
 import {
   createPublicEventRegistration,
-  generatePublicEventRegistrationPix,
   getPublicEventRegistration,
 } from "@/services/public-contracts";
 import { participantApi } from "@/services/participant-api";
+import { createParticipantRegistrationPixPayment } from "@/services/payments";
 import type {
   ParticipantRegistration,
   ParticipantRegistrationCreatePayload,
@@ -31,5 +31,5 @@ export function generateParticipantRegistrationPix(
   registrationId: string | number,
   payload: ParticipantPaymentCreatePayload = {}
 ) {
-  return generatePublicEventRegistrationPix(registrationId, payload);
+  return createParticipantRegistrationPixPayment(registrationId, payload);
 }

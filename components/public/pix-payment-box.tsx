@@ -11,6 +11,7 @@ import {
   getParticipantPaymentStatusLabel,
 } from "@/lib/format";
 import { getErrorMessage } from "@/lib/get-error-message";
+import { isParticipantPaymentTerminal } from "@/lib/participant-registration-query";
 import type {
   ParticipantRegistrationDetail,
   ParticipantRegistrationPayment,
@@ -38,6 +39,7 @@ type PixPaymentBoxProps = {
   result?: ParticipantPaymentResponse | null;
   canResumePayment?: boolean;
   isGenerating?: boolean;
+  isRefreshingStatus?: boolean;
   generationError?: unknown;
   onGeneratePix?: () => void;
 };
@@ -59,20 +61,27 @@ export function PixPaymentBox({
   result,
   canResumePayment = true,
   isGenerating = false,
+  isRefreshingStatus = false,
   generationError,
   onGeneratePix,
 }: PixPaymentBoxProps) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
+  const registrationPaymentStatus =
+    registration.latest_payment?.status ?? registration.payment_status;
+  const registrationHasFinalStatus = isParticipantPaymentTerminal(
+    registrationPaymentStatus
+  );
+
   const payment = useMemo<PaymentView | null>(() => {
+    if (registrationHasFinalStatus) return registration.latest_payment;
     if (isPaymentRead(result)) return result;
     return registration.latest_payment;
-  }, [registration.latest_payment, result]);
+  }, [registration.latest_payment, registrationHasFinalStatus, result]);
 
-  const paymentStatus =
-    result?.status === "not_required"
-      ? "not_required"
-      : payment?.status ?? registration.payment_status;
+  const paymentStatus = registrationHasFinalStatus
+    ? registrationPaymentStatus
+    : result?.status ?? registrationPaymentStatus;
 
   const canGeneratePix = Boolean(
     onGeneratePix &&
@@ -128,48 +137,36 @@ export function PixPaymentBox({
       ) : null}
 
       {paymentStatus === "not_required" ? (
-        <Alert variant="success" title="Inscrição confirmada">
+        <Alert variant="success" title="Este evento é gratuito">
           <p>
             {result?.status === "not_required"
               ? result.message
-              : "Este evento é gratuito e não exige pagamento."}
+              : "Sua inscrição está confirmada e não exige pagamento."}
           </p>
         </Alert>
       ) : null}
 
       {paymentStatus === "pending" && payment ? (
-        <Alert variant="info" title="Pagamento pendente">
-          <p>
-            Sua inscrição já existe. Retome o pagamento usando o link, o QR Code
-            ou o código Pix abaixo.
-          </p>
+        <Alert variant="info" title="Aguardando pagamento">
+          <p>Use o QR Code ou o código Pix abaixo para concluir.</p>
         </Alert>
       ) : null}
 
       {paymentStatus === "pending" && !payment ? (
-        <Alert variant="warning" title="Inscrição criada, pagamento pendente">
-          <p>
-            A inscrição foi preservada. Gere o Pix sem enviar o formulário
-            novamente.
-          </p>
+        <Alert variant="warning" title="Aguardando pagamento">
+          <p>Sua inscrição foi salva. Gere a cobrança Pix para continuar.</p>
         </Alert>
       ) : null}
 
       {paymentStatus === "expired" ? (
-        <Alert variant="warning" title="O Pix anterior expirou">
-          <p>
-            Gere uma nova tentativa caso o backend ainda permita retomar esta
-            inscrição.
-          </p>
+        <Alert variant="warning" title="Este Pix expirou. Gere uma nova cobrança">
+          <p>Sua inscrição foi preservada e pode receber uma nova tentativa.</p>
         </Alert>
       ) : null}
 
       {paymentStatus === "error" ? (
-        <Alert variant="warning" title="A tentativa anterior falhou">
-          <p>
-            Sua inscrição continua salva. Você pode solicitar uma nova tentativa
-            de pagamento.
-          </p>
+        <Alert variant="warning" title="Não foi possível gerar o Pix">
+          <p>Sua inscrição foi preservada. Tente gerar uma nova cobrança.</p>
         </Alert>
       ) : null}
 
@@ -249,7 +246,7 @@ export function PixPaymentBox({
       {!canResumePayment &&
       (paymentStatus === "expired" || paymentStatus === "error") ? (
         <Alert variant="warning" title="Pagamento não pode ser retomado">
-          <p>Consulte a área “Minhas inscrições” para acompanhar o status.</p>
+          <p>Consulte Minhas inscrições para acompanhar o status.</p>
         </Alert>
       ) : null}
 
@@ -258,7 +255,7 @@ export function PixPaymentBox({
           {isGenerating
             ? "Gerando Pix..."
             : paymentStatus === "expired"
-              ? "Gerar novo Pix"
+              ? "Gerar nova cobrança"
               : paymentStatus === "error"
                 ? "Tentar novamente"
                 : "Gerar Pix"}
@@ -266,20 +263,23 @@ export function PixPaymentBox({
       ) : null}
 
       {generationError ? (
-        <Alert variant="destructive" title="Não foi possível gerar o pagamento">
+        <Alert variant="destructive" title="Não foi possível gerar o Pix">
           <p>
             {getErrorMessage(
               generationError,
-              "Não foi possível gerar o pagamento agora. Tente novamente."
+              "Não foi possível gerar o Pix agora. Tente novamente."
             )}
           </p>
         </Alert>
       ) : null}
 
-      <p className="text-xs leading-5 text-slate-500">
-        A confirmação definitiva é atualizada pelo backend após o webhook da
-        OpenPix.
-      </p>
+      {paymentStatus === "pending" ? (
+        <p className="text-xs leading-5 text-slate-500" aria-live="polite">
+          {isRefreshingStatus
+            ? "Atualizando a confirmação do pagamento..."
+            : "A confirmação será atualizada automaticamente."}
+        </p>
+      ) : null}
     </div>
   );
 }
