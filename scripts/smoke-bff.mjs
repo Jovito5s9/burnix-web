@@ -181,6 +181,18 @@ async function createMockBackend() {
       assert.equal(request.headers.authorization, "Bearer participant-secret-token");
       assert.equal(Object.hasOwn(body, "participant_id"), false);
       assert.equal(Object.hasOwn(body, "email"), false);
+
+      if (body.name === "Pessoa Duplicada") {
+        return sendJson(response, 409, {
+          detail: {
+            code: "registration_already_exists",
+            message: "Você já possui uma inscrição neste evento.",
+            registration_id: 44,
+            can_resume_payment: true,
+          },
+        });
+      }
+
       return sendJson(response, 201, {
         id: 44,
         registration_status: "pending_payment",
@@ -212,6 +224,11 @@ async function createMockBackend() {
       request.url === "/participant/registrations/44/payments/pix"
     ) {
       assert.equal(request.headers.authorization, "Bearer participant-secret-token");
+      assert.equal(typeof body.idempotency_key, "string");
+      assert.match(
+        body.idempotency_key,
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      );
       return sendJson(response, 201, {
         id: 90,
         registration_id: 44,
@@ -387,6 +404,25 @@ async function main() {
     assert.equal(registration.status, 201);
     assert.equal((await registration.json()).id, 44);
 
+    const duplicateRegistration = await fetch(
+      `${origin}/api/backend/participant/participant/contracts/7/registrations`,
+      {
+        method: "POST",
+        headers: {
+          cookie: participantCookie,
+          "content-type": "application/json",
+          origin,
+        },
+        body: JSON.stringify({ name: "Pessoa Duplicada", extra_fields: {} }),
+      }
+    );
+    assert.equal(duplicateRegistration.status, 409);
+    const duplicateBody = await duplicateRegistration.json();
+    assert.equal(duplicateBody.detail.code, "registration_already_exists");
+    assert.equal(duplicateBody.detail.registration_id, 44);
+    assert.equal(duplicateBody.detail.can_resume_payment, true);
+
+    const idempotencyKey = crypto.randomUUID();
     const payment = await fetch(
       `${origin}/api/backend/participant/participant/registrations/44/payments/pix`,
       {
@@ -396,11 +432,35 @@ async function main() {
           "content-type": "application/json",
           origin,
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ idempotency_key: idempotencyKey }),
       }
     );
     assert.equal(payment.status, 201);
     assert.equal((await payment.json()).registration_id, 44);
+
+    const paymentRetry = await fetch(
+      `${origin}/api/backend/participant/participant/registrations/44/payments/pix`,
+      {
+        method: "POST",
+        headers: {
+          cookie: participantCookie,
+          "content-type": "application/json",
+          origin,
+        },
+        body: JSON.stringify({ idempotency_key: idempotencyKey }),
+      }
+    );
+    assert.equal(paymentRetry.status, 201);
+    assert.equal((await paymentRetry.json()).id, 90);
+
+    const paymentCalls = backend.calls.filter(
+      (call) =>
+        call.method === "POST" &&
+        call.url === "/participant/registrations/44/payments/pix"
+    );
+    assert.equal(paymentCalls.length, 2);
+    assert.equal(paymentCalls[0].body.idempotency_key, idempotencyKey);
+    assert.equal(paymentCalls[1].body.idempotency_key, idempotencyKey);
 
     const participantCannotUseOrganizerProxy = await fetch(
       `${origin}/api/backend/participant/auth/me`,
@@ -467,7 +527,7 @@ async function main() {
     assert.match(logoutCookie, /burnix\.participant_access_token=/);
     assert.equal(logoutCookie.includes("burnix.access_token="), false);
 
-    console.log("Smoke BFF aprovado: sessões separadas, proteção de Minhas inscrições, listagem/detalhe autenticados e fluxo Pix do participante.");
+    console.log("Smoke BFF aprovado: sessões separadas, recuperação do 409, metadados seguros e idempotência do Pix preservada pelo BFF.");
   } catch (error) {
     console.error(logs);
     throw error;

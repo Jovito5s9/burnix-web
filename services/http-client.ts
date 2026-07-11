@@ -1,5 +1,13 @@
 import axios from "axios";
-import { ApiClientError, getApiFieldErrors, getErrorMessage } from "@/lib/get-error-message";
+
+import {
+  ApiClientError,
+  getApiErrorCode,
+  getApiErrorDetail,
+  getApiErrorRetryable,
+  getApiFieldErrors,
+  getErrorMessage,
+} from "@/lib/get-error-message";
 
 export function createApiClient(baseURL: string) {
   const client = axios.create({
@@ -18,9 +26,16 @@ export function createApiClient(baseURL: string) {
         error,
         "Erro inesperado na comunicação com a API."
       );
-      const fieldErrors = getApiFieldErrors(error);
 
-      return Promise.reject(new ApiClientError(message, status, fieldErrors));
+      return Promise.reject(
+        new ApiClientError(message, {
+          status,
+          fieldErrors: getApiFieldErrors(error),
+          code: getApiErrorCode(error),
+          retryable: getApiErrorRetryable(error),
+          detail: getApiErrorDetail(error),
+        })
+      );
     }
   );
 

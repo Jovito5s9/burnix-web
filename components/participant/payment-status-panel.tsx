@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import {
   formatDate,
   getParticipantPaymentStatusLabel,
 } from "@/lib/format";
-import { getErrorMessage } from "@/lib/get-error-message";
+import { getErrorMessage, isApiNetworkError } from "@/lib/get-error-message";
 import type { ParticipantRegistrationDetail } from "@/types/participant-registration";
 import type { ParticipantPaymentResponse, PublicPaymentRead } from "@/types/payment";
 
@@ -40,20 +40,34 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
   const generatePix = useGenerateParticipantRegistrationPix();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const paymentAttemptKeyRef = useRef<string | null>(null);
 
   const payment = registration.latest_payment;
   const paymentStatus = payment?.status ?? registration.payment_status;
   const canGeneratePix =
-    registration.registration_status === "pending_payment" &&
+    (registration.registration_status === "pending_payment" ||
+      registration.registration_status === "expired") &&
     (!payment || paymentStatus === "expired" || paymentStatus === "error");
+
+  useEffect(() => {
+    if (paymentStatus === "paid" || paymentStatus === "not_required" || paymentStatus === "pending" && payment) {
+      paymentAttemptKeyRef.current = null;
+    }
+  }, [payment, paymentStatus]);
 
   async function handleGeneratePix() {
     setSuccessMessage(null);
 
+    const idempotencyKey =
+      paymentAttemptKeyRef.current ?? crypto.randomUUID();
+    paymentAttemptKeyRef.current = idempotencyKey;
+
     try {
       const result = await generatePix.mutateAsync({
         registrationId: registration.id,
+        payload: { idempotency_key: idempotencyKey },
       });
+      paymentAttemptKeyRef.current = null;
 
       if (isPaymentRead(result)) {
         setSuccessMessage(
@@ -64,7 +78,10 @@ export function PaymentStatusPanel({ registration }: PaymentStatusPanelProps) {
       } else {
         setSuccessMessage(result.message);
       }
-    } catch {
+    } catch (error) {
+      if (!isApiNetworkError(error)) {
+        paymentAttemptKeyRef.current = null;
+      }
       // O erro seguro do backend é exibido no painel.
     }
   }

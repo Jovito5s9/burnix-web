@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ import {
   getParticipantPaymentStatusLabel,
   getParticipantRegistrationStatusLabel,
 } from "@/lib/format";
-import { getErrorMessage } from "@/lib/get-error-message";
+import { getErrorMessage, isApiNetworkError } from "@/lib/get-error-message";
 import type { ParticipantRegistration } from "@/types/participant-registration";
 
 type RegistrationCardProps = {
@@ -49,18 +50,31 @@ function paymentBadgeVariant(
 export function RegistrationCard({ registration }: RegistrationCardProps) {
   const router = useRouter();
   const generatePix = useGenerateParticipantRegistrationPix();
+  const paymentAttemptKeyRef = useRef<string | null>(null);
   const detailHref = `/minhas-inscricoes/${registration.id}`;
   const paymentStatus = registration.latest_payment?.status ?? registration.payment_status;
   const canGenerateNewPix =
-    registration.registration_status === "pending_payment" &&
+    (registration.registration_status === "pending_payment" ||
+      registration.registration_status === "expired") &&
     (paymentStatus === "expired" || paymentStatus === "error");
-  const isPaymentPending = registration.payment_status === "pending";
+  const isPaymentPending = paymentStatus === "pending";
 
   async function handleGeneratePix() {
+    const idempotencyKey =
+      paymentAttemptKeyRef.current ?? crypto.randomUUID();
+    paymentAttemptKeyRef.current = idempotencyKey;
+
     try {
-      await generatePix.mutateAsync({ registrationId: registration.id });
+      await generatePix.mutateAsync({
+        registrationId: registration.id,
+        payload: { idempotency_key: idempotencyKey },
+      });
+      paymentAttemptKeyRef.current = null;
       router.push(`${detailHref}#pagamento`);
-    } catch {
+    } catch (error) {
+      if (!isApiNetworkError(error)) {
+        paymentAttemptKeyRef.current = null;
+      }
       // O feedback seguro é exibido abaixo dos botões.
     }
   }

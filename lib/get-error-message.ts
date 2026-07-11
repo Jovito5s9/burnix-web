@@ -7,28 +7,46 @@ type ValidationErrorItem = {
   msg?: unknown;
 };
 
+export type ApiErrorDetailObject = {
+  code?: unknown;
+  message?: unknown;
+  errors?: ValidationErrorItem[];
+  retryable?: unknown;
+  [key: string]: unknown;
+};
+
 type ApiErrorDetail =
   | string
   | ValidationErrorItem[]
-  | {
-      message?: unknown;
-      errors?: ValidationErrorItem[];
-    }
-  | Record<string, unknown>
+  | ApiErrorDetailObject
   | null
   | undefined;
 
 export type ApiFieldErrors = Record<string, string>;
 
+type ApiClientErrorOptions = {
+  status?: number;
+  fieldErrors?: ApiFieldErrors;
+  code?: string;
+  retryable?: boolean;
+  detail?: ApiErrorDetailObject | null;
+};
+
 export class ApiClientError extends Error {
   status?: number;
   fieldErrors: ApiFieldErrors;
+  code?: string;
+  retryable?: boolean;
+  detail: ApiErrorDetailObject | null;
 
-  constructor(message: string, status?: number, fieldErrors: ApiFieldErrors = {}) {
+  constructor(message: string, options: ApiClientErrorOptions = {}) {
     super(message);
     this.name = "ApiClientError";
-    this.status = status;
-    this.fieldErrors = fieldErrors;
+    this.status = options.status;
+    this.fieldErrors = options.fieldErrors ?? {};
+    this.code = options.code;
+    this.retryable = options.retryable;
+    this.detail = options.detail ?? null;
   }
 }
 
@@ -140,20 +158,62 @@ function collectFieldErrors(detail: ApiErrorDetail): ApiFieldErrors {
   return fieldErrors;
 }
 
+function asDetailObject(detail: unknown): ApiErrorDetailObject | null {
+  return detail && typeof detail === "object" && !Array.isArray(detail)
+    ? (detail as ApiErrorDetailObject)
+    : null;
+}
+
+function getAxiosErrorDetail(error: unknown): ApiErrorDetail {
+  if (!axios.isAxiosError(error)) return null;
+
+  const data = error.response?.data as
+    | { detail?: ApiErrorDetail; message?: unknown }
+    | undefined;
+
+  return data?.detail;
+}
+
+export function getApiErrorDetail(error: unknown): ApiErrorDetailObject | null {
+  if (error instanceof ApiClientError) {
+    return error.detail;
+  }
+
+  return asDetailObject(getAxiosErrorDetail(error));
+}
+
+export function getApiErrorCode(error: unknown): string | undefined {
+  if (error instanceof ApiClientError) {
+    return error.code;
+  }
+
+  const detail = getApiErrorDetail(error);
+  return typeof detail?.code === "string" ? detail.code : undefined;
+}
+
+export function getApiErrorRetryable(error: unknown): boolean | undefined {
+  if (error instanceof ApiClientError) {
+    return error.retryable;
+  }
+
+  const detail = getApiErrorDetail(error);
+  return typeof detail?.retryable === "boolean" ? detail.retryable : undefined;
+}
+
+export function isApiNetworkError(error: unknown): boolean {
+  if (error instanceof ApiClientError) {
+    return error.status === undefined;
+  }
+
+  return axios.isAxiosError(error) && !error.response;
+}
+
 export function getApiFieldErrors(error: unknown): ApiFieldErrors {
   if (error instanceof ApiClientError) {
     return error.fieldErrors;
   }
 
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as
-      | { detail?: ApiErrorDetail; message?: unknown }
-      | undefined;
-
-    return collectFieldErrors(data?.detail);
-  }
-
-  return {};
+  return collectFieldErrors(getAxiosErrorDetail(error));
 }
 
 export function getErrorMessage(
@@ -177,10 +237,6 @@ export function getErrorMessage(
 
     if (typeof data?.message === "string" && data.message.trim()) {
       return data.message;
-    }
-
-    if (error.message) {
-      return error.message;
     }
 
     return fallback;

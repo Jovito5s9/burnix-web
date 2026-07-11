@@ -28,6 +28,18 @@ export type Registration = {
   updated_at: string;
 };
 
+export type RegistrationAlreadyExistsErrorDetail = {
+  code: "registration_already_exists";
+  message: string;
+  registration_id: number;
+  can_resume_payment: boolean;
+};
+
+export type RegistrationRecoveryContext = {
+  registrationId: number;
+  canResumePayment: boolean;
+};
+
 /** @deprecated Use ParticipantRegistrationCreatePayload from @/types/participant-registration. */
 export type PublicRegistrationPayload = {
   name: string;

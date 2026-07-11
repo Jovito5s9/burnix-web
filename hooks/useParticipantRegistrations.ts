@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { isApiNetworkError } from "@/lib/get-error-message";
+
 import {
   generateParticipantRegistrationPix,
   getMyRegistration,
@@ -106,6 +108,9 @@ export function useGenerateParticipantRegistrationPix() {
       registrationId: string | number;
       payload?: ParticipantPaymentCreatePayload;
     }) => generateParticipantRegistrationPix(registrationId, payload ?? {}),
+    retry: (failureCount, error) =>
+      isApiNetworkError(error) && failureCount < 2,
+    retryDelay: (attemptIndex) => Math.min(750 * 2 ** attemptIndex, 3_000),
     onSuccess: (result, variables) => {
       const registrationId = String(variables.registrationId);
 

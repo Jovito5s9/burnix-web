@@ -8,6 +8,7 @@ Esta versão contém:
 ```text
 Etapa 1 — separação e proteção da sessão do participante
 Etapa 2 — área “Minhas inscrições”
+Etapa 3 — recuperação de duplicidade e retomada idempotente do pagamento
 ```
 
 A implementação está alinhada ao backend Burnix `0.6.0` e às rotas autenticadas
@@ -32,8 +33,10 @@ Fluxo principal:
 2. A inscrição exige uma conta de participante.
 3. O backend deriva participant_id, e-mail e owner_user_id da sessão.
 4. Eventos pagos geram Pix pela rota autenticada do participante.
-5. “Minhas inscrições” lista eventos, status, valor e ações de pagamento.
-6. O detalhe mostra os dados da própria inscrição e o painel Pix.
+5. Um conflito de inscrição recupera o registration_id existente.
+6. O pagamento atual é carregado e pode ser retomado conforme o status.
+7. “Minhas inscrições” lista eventos, status, valor e ações de pagamento.
+8. O detalhe mostra os dados da própria inscrição e o painel Pix.
 ```
 
 ## Sessões separadas
@@ -119,6 +122,23 @@ POST /participant/registrations/{registration_id}/payments/pix
 A rota pode reutilizar uma tentativa pendente ou paga e criar nova tentativa
 após `expired` ou `error`, conforme decisão final do backend.
 
+## Duplicidade e retomada
+
+O frontend trata o contrato:
+
+```text
+409 registration_already_exists
+```
+
+como recuperação de fluxo. Ele usa `registration_id`, consulta o detalhe
+autenticado e mostra o pagamento existente. Depois que existe uma inscrição
+ativa, o formulário não cria outra inscrição para compensar falhas do Pix.
+
+Cada solicitação de pagamento recebe `crypto.randomUUID()` como
+`idempotency_key`. A chave é criada antes da mutation e permanece igual durante
+retries automáticos de rede. A constraint e a máquina de estados do backend
+continuam sendo a fonte definitiva.
+
 ## Proteção de páginas
 
 ```text
@@ -199,4 +219,6 @@ docs/frontend-stage-1-participant-session.md
 docs/validation-stage-1.md
 docs/frontend-stage-2-participant-registrations.md
 docs/validation-stage-2.md
+docs/frontend-stage-3-registration-duplicate-recovery.md
+docs/validation-stage-3.md
 ```
