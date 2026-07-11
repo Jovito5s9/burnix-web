@@ -117,6 +117,7 @@ export function RegistrationForm({
   const recoverRegistration = useRecoverParticipantRegistration();
   const createPix = useCreateParticipantRegistrationPix();
   const paymentAttemptRef = useRef<PaymentAttempt | null>(null);
+  const registrationSubmissionRef = useRef(false);
 
   const [extraFields, setExtraFields] = useState<Record<string, unknown>>({});
   const [fieldErrors, setFieldErrors] = useState<ApiFieldErrors>({});
@@ -251,8 +252,18 @@ export function RegistrationForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = event.currentTarget;
 
+    if (registrationSubmissionRef.current) return;
+
+    registrationSubmissionRef.current = true;
+    try {
+      await submitRegistration(event.currentTarget);
+    } finally {
+      registrationSubmissionRef.current = false;
+    }
+  }
+
+  async function submitRegistration(form: HTMLFormElement) {
     setFeedback(null);
     setFieldErrors({});
     setPaymentResult(null);

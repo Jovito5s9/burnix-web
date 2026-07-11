@@ -22,11 +22,19 @@ import {
   formatNumber,
   getContractStatusLabel,
 } from "@/lib/format";
-import { getErrorMessage } from "@/lib/get-error-message";
+import { ApiClientError, getApiErrorCode, getErrorMessage } from "@/lib/get-error-message";
 
 type PublicEventPageProps = {
   id: string;
 };
+
+function isPublicEventNotFound(error: unknown) {
+  return (
+    (error instanceof ApiClientError && error.status === 404) ||
+    getApiErrorCode(error) === "event_not_published" ||
+    getApiErrorCode(error) === "event_not_found"
+  );
+}
 
 export function PublicEventPage({ id }: PublicEventPageProps) {
   const eventQuery = usePublicContract(id);
@@ -41,6 +49,24 @@ export function PublicEventPage({ id }: PublicEventPageProps) {
   }
 
   if (eventQuery.error) {
+    if (isPublicEventNotFound(eventQuery.error)) {
+      return (
+        <section className="py-16">
+          <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
+            <EmptyState
+              title="Evento não encontrado"
+              description="Este evento não está publicado ou o link informado não existe."
+              action={
+                <Button asChild>
+                  <Link href="/">Voltar ao início</Link>
+                </Button>
+              }
+            />
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section className="py-16">
         <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">

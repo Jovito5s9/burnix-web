@@ -10,6 +10,7 @@ Etapa 1 — separação e proteção da sessão do participante
 Etapa 2 — área “Minhas inscrições”
 Etapa 3 — recuperação de duplicidade e retomada idempotente do pagamento
 Etapa 4 — cobrança Pix segura e polling do status da inscrição
+Etapa 5 — testes unitários, mocks de API, E2E e CI
 ```
 
 A implementação está alinhada ao backend Burnix `0.6.0` e às rotas autenticadas
@@ -211,15 +212,39 @@ npm ci
 npm run dev
 ```
 
-## Validação
+## Testes e validação
+
+A Etapa 5 usa:
+
+```text
+Vitest + React Testing Library -> componentes e fluxos de interface
+MSW                              -> contratos HTTP do backend nos testes unitários
+Playwright                       -> jornadas completas no navegador
+```
+
+Execução local:
 
 ```bash
 npm run typecheck
 npm run lint
 npm run build
+npm run test
+npm run test:e2e
+```
+
+Comandos auxiliares:
+
+```bash
+npm run test:watch
+npm run test:e2e:ui
 npm run test:bff
 npm run test:stage4
 ```
+
+Os testes E2E sobem o Next.js automaticamente e simulam somente os endpoints
+do BFF. Não exigem backend, banco, credenciais OpenPix ou acesso ao sandbox.
+O workflow `.github/workflows/frontend-ci.yml` executa a mesma sequência em
+pushes e pull requests.
 
 Relatórios detalhados:
 
@@ -232,4 +257,6 @@ docs/frontend-stage-3-registration-duplicate-recovery.md
 docs/validation-stage-3.md
 docs/frontend-stage-4-openpix-participant-flow.md
 docs/validation-stage-4.md
+docs/frontend-stage-5-tests.md
+docs/validation-stage-5.md
 ```
