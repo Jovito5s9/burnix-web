@@ -13,7 +13,7 @@ const organizerProtectedPrefixes = [
   "/settings",
   "/admin",
 ];
-const participantProtectedPrefixes = ["/participante/minhas-inscricoes"];
+const participantProtectedPrefixes = ["/minhas-inscricoes"];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
   return prefixes.some(
@@ -57,6 +57,6 @@ export const config = {
     "/payments/:path*",
     "/settings/:path*",
     "/admin/:path*",
-    "/participante/minhas-inscricoes/:path*",
+    "/minhas-inscricoes/:path*",
   ],
 };

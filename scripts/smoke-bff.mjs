@@ -94,6 +94,76 @@ async function createMockBackend() {
       });
     }
 
+    if (request.method === "GET" && request.url === "/participant/registrations") {
+      assert.equal(request.headers.authorization, "Bearer participant-secret-token");
+      return sendJson(response, 200, [
+        {
+          id: 44,
+          registration_status: "pending_payment",
+          payment_status: "pending",
+          created_at: "2026-07-10T10:00:00Z",
+          event: {
+            id: 7,
+            title: "Evento",
+            status: "published",
+            price: "10.00",
+            currency: "BRL",
+            start_date: "2026-08-01",
+            end_date: "2026-08-01",
+          },
+          latest_payment: {
+            id: 90,
+            attempt_number: 1,
+            status: "pending",
+            amount: "10.00",
+            currency: "BRL",
+            checkout_url: "https://example.test/checkout",
+            qr_code_base64: null,
+            copy_and_paste: "PIX-CODE",
+            expires_at: "2026-07-10T11:00:00Z",
+          },
+        },
+      ]);
+    }
+
+    if (request.method === "GET" && request.url === "/participant/registrations/44") {
+      assert.equal(request.headers.authorization, "Bearer participant-secret-token");
+      return sendJson(response, 200, {
+        id: 44,
+        registration_status: "pending_payment",
+        payment_status: "pending",
+        created_at: "2026-07-10T10:00:00Z",
+        event: {
+          id: 7,
+          title: "Evento",
+          status: "published",
+          price: "10.00",
+          currency: "BRL",
+          start_date: "2026-08-01",
+          end_date: "2026-08-01",
+        },
+        latest_payment: {
+          id: 90,
+          attempt_number: 1,
+          status: "pending",
+          amount: "10.00",
+          currency: "BRL",
+          checkout_url: "https://example.test/checkout",
+          qr_code_base64: null,
+          copy_and_paste: "PIX-CODE",
+          expires_at: "2026-07-10T11:00:00Z",
+        },
+        name: "Pessoa Participante",
+        email: "participante@example.com",
+        phone: null,
+        document: null,
+        sex: null,
+        age: null,
+        extra_fields: { camiseta: "M" },
+        updated_at: "2026-07-10T10:00:00Z",
+      });
+    }
+
     if (request.method === "GET" && request.url === "/auth/me") {
       assert.equal(request.headers.authorization, "Bearer organizer-secret-token");
       return sendJson(response, 200, {
@@ -262,6 +332,46 @@ async function main() {
     assert.equal(participantMe.status, 200);
     assert.equal((await participantMe.json()).id, 12);
 
+    const protectedRegistrationsWithoutSession = await fetch(
+      `${origin}/minhas-inscricoes`,
+      { redirect: "manual" }
+    );
+    assert.equal(protectedRegistrationsWithoutSession.status, 307);
+    assert.match(
+      protectedRegistrationsWithoutSession.headers.get("location"),
+      /\/participante\/entrar\?next=%2Fminhas-inscricoes/
+    );
+
+    const protectedRegistrationsWithOrganizerOnly = await fetch(
+      `${origin}/minhas-inscricoes`,
+      { headers: { cookie: "burnix.access_token=organizer-secret-token" }, redirect: "manual" }
+    );
+    assert.equal(protectedRegistrationsWithOrganizerOnly.status, 307);
+
+    const registrationsPage = await fetch(`${origin}/minhas-inscricoes`, {
+      headers: { cookie: participantCookie },
+      redirect: "manual",
+    });
+    assert.equal(registrationsPage.status, 200);
+
+    const myRegistrations = await fetch(
+      `${origin}/api/backend/participant/participant/registrations`,
+      { headers: { cookie: participantCookie } }
+    );
+    assert.equal(myRegistrations.status, 200);
+    const myRegistrationsBody = await myRegistrations.json();
+    assert.equal(myRegistrationsBody.length, 1);
+    assert.equal(myRegistrationsBody[0].event.title, "Evento");
+
+    const myRegistrationDetail = await fetch(
+      `${origin}/api/backend/participant/participant/registrations/44`,
+      { headers: { cookie: participantCookie } }
+    );
+    assert.equal(myRegistrationDetail.status, 200);
+    const myRegistrationDetailBody = await myRegistrationDetail.json();
+    assert.equal(myRegistrationDetailBody.email, "participante@example.com");
+    assert.equal(myRegistrationDetailBody.latest_payment.attempt_number, 1);
+
     const registration = await fetch(
       `${origin}/api/backend/participant/participant/contracts/7/registrations`,
       {
@@ -357,7 +467,7 @@ async function main() {
     assert.match(logoutCookie, /burnix\.participant_access_token=/);
     assert.equal(logoutCookie.includes("burnix.access_token="), false);
 
-    console.log("Smoke BFF aprovado: sessões separadas, cookies HttpOnly, isolamento de rotas e fluxo autenticado do participante.");
+    console.log("Smoke BFF aprovado: sessões separadas, proteção de Minhas inscrições, listagem/detalhe autenticados e fluxo Pix do participante.");
   } catch (error) {
     console.error(logs);
     throw error;

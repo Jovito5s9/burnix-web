@@ -28,7 +28,7 @@ export type Registration = {
   updated_at: string;
 };
 
-/** @deprecated Use ParticipantRegistrationCreatePayload from @/types/participant. */
+/** @deprecated Use ParticipantRegistrationCreatePayload from @/types/participant-registration. */
 export type PublicRegistrationPayload = {
   name: string;
   phone?: string | null;

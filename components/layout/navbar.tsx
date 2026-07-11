@@ -52,7 +52,7 @@ export function Navbar() {
           </span>
           <div className="leading-tight">
             <p className="font-semibold text-slate-950">{APP_NAME}</p>
-            <p className="text-xs text-slate-500">
+            <p className="hidden text-xs text-slate-500 lg:block">
               Eventos públicos, inscrições e pagamentos
             </p>
           </div>
@@ -73,7 +73,17 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {participant ? (
             <>
-              <Badge variant="outline" className="hidden max-w-52 truncate sm:inline-flex">
+              <Button
+                asChild
+                variant={pathname.startsWith("/minhas-inscricoes") ? "secondary" : "ghost"}
+                className="px-2 sm:px-4"
+              >
+                <Link href="/minhas-inscricoes" aria-label="Minhas inscrições">
+                  <span className="sm:hidden">Inscrições</span>
+                  <span className="hidden sm:inline">Minhas inscrições</span>
+                </Link>
+              </Button>
+              <Badge variant="outline" className="hidden max-w-52 truncate md:inline-flex">
                 {participant.email}
               </Badge>
               <Button

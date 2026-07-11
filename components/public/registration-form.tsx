@@ -22,7 +22,7 @@ import {
   type ApiFieldErrors,
 } from "@/lib/get-error-message";
 import type { ContractFormField } from "@/types/form-field";
-import type { ParticipantRegistrationDetail } from "@/types/participant";
+import type { ParticipantRegistrationDetail } from "@/types/participant-registration";
 import type { PublicPaymentRead } from "@/types/payment";
 
 type RegistrationFormProps = {

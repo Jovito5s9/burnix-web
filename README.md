@@ -3,22 +3,47 @@
 Frontend Next.js do Burnix, plataforma SaaS multi-organizador para eventos,
 inscrições e pagamentos Pix/OpenPix.
 
-Esta versão implementa a **Etapa 1 do frontend: separação e proteção da sessão
-do participante**, alinhada ao backend Burnix `0.6.0` e às rotas autenticadas em
-`/participant/*`.
+Esta versão contém:
 
-## Estado atual
+```text
+Etapa 1 — separação e proteção da sessão do participante
+Etapa 2 — área “Minhas inscrições”
+```
 
-### Sessões separadas
+A implementação está alinhada ao backend Burnix `0.6.0` e às rotas autenticadas
+em `/participant/*`.
 
-O frontend mantém duas sessões independentes:
+## Funcionalidades do participante
+
+Rotas de interface:
+
+```text
+/participante/entrar
+/participante/cadastro
+/eventos/{contract_id}
+/minhas-inscricoes
+/minhas-inscricoes/{registration_id}
+```
+
+Fluxo principal:
+
+```text
+1. O evento público é consultado sem autenticação.
+2. A inscrição exige uma conta de participante.
+3. O backend deriva participant_id, e-mail e owner_user_id da sessão.
+4. Eventos pagos geram Pix pela rota autenticada do participante.
+5. “Minhas inscrições” lista eventos, status, valor e ações de pagamento.
+6. O detalhe mostra os dados da própria inscrição e o painel Pix.
+```
+
+## Sessões separadas
 
 ```text
 Organizador  -> cookie burnix.access_token
 Participante -> cookie burnix.participant_access_token
 ```
 
-Os dois cookies são criados por Route Handlers do Next.js e usam:
+Os cookies são criados por Route Handlers do Next.js e usam:
 
 ```text
 HttpOnly
@@ -30,9 +55,9 @@ Secure em produção
 O JWT não é salvo em `localStorage`, não é criado por JavaScript e não é
 devolvido pelas respostas do BFF ao navegador.
 
-### BFF do Next.js
+## BFF do Next.js
 
-O navegador chama somente endpoints do próprio frontend:
+O navegador chama endpoints do próprio frontend:
 
 ```text
 POST /api/session/organizer/login
@@ -45,89 +70,56 @@ POST /api/session/logout
 /api/backend/public/*
 ```
 
-Os Route Handlers leem o cookie `HttpOnly` correto no servidor e acrescentam o
-header `Authorization: Bearer ...` somente na chamada ao backend FastAPI.
+Os Route Handlers leem o cookie HttpOnly correto no servidor e acrescentam o
+Bearer token somente na chamada ao backend FastAPI.
 
 O BFF também:
 
 - bloqueia a troca de categoria de sessão;
 - não permite obter o token bruto pelas rotas proxy;
-- restringe os paths disponíveis para cada categoria;
-- rejeita mutações com origem diferente da aplicação;
+- mantém allowlist de paths por categoria;
+- rejeita mutações com origem divergente;
 - remove o cookie correspondente quando o backend retorna `401`;
-- preserva respostas JSON, CSV e erros estruturados do backend;
-- devolve erro público controlado quando o backend está indisponível.
+- preserva respostas e erros estruturados do backend;
+- devolve resposta pública controlada quando o backend está indisponível.
 
-### Fluxo do participante
+## “Minhas inscrições”
 
-Rotas de interface:
-
-```text
-/participante/entrar
-/participante/cadastro
-/eventos/{contract_id}
-```
-
-Fluxo de inscrição:
+A listagem consome:
 
 ```text
-1. GET /public/contracts/{contract_id}
-2. Evento continua visível sem autenticação.
-3. Ao clicar em “Inscrever-se”, o frontend verifica a sessão do participante.
-4. Sem sessão, redireciona para:
-   /participante/entrar?next=/eventos/{contract_id}
-5. Após login ou cadastro, retorna ao evento.
-6. POST /participant/contracts/{contract_id}/registrations
-7. Para evento pago:
-   POST /participant/registrations/{registration_id}/payments/pix
+GET /participant/registrations
 ```
 
-O payload da inscrição contém somente dados permitidos pelo backend:
-
-```json
-{
-  "name": "Pessoa Participante",
-  "phone": "+5591999999999",
-  "document": "00000000000",
-  "sex": null,
-  "age": null,
-  "extra_fields": {}
-}
-```
-
-O frontend **não envia**:
+Cada cartão mostra:
 
 ```text
-participant_id
-email
-owner_user_id
+nome e data do evento
+status traduzido da inscrição
+status traduzido do pagamento
+valor
+Ver inscrição
+Concluir pagamento
+Gerar novo Pix quando expirado
+Pagamento confirmado quando pago
 ```
 
-Esses valores são derivados pelo backend a partir do JWT do participante e do
-evento solicitado.
-
-Eventos gratuitos são confirmados sem tentativa de cobrança. Eventos pagos
-recebem a resposta pública reduzida, sem PII ou payload interno da OpenPix.
-
-### Sessão do organizador
-
-O login do organizador também foi migrado para o BFF:
+O detalhe consome:
 
 ```text
-POST /api/session/organizer/login
-  -> backend POST /auth/login
-  -> cookie HttpOnly burnix.access_token
+GET /participant/registrations/{registration_id}
 ```
 
-As chamadas do painel continuam usando as mesmas funções de serviço, mas agora
-passam por `/api/backend/organizer/*`. O navegador não lê nem monta o Bearer
-token.
+O painel de pagamento usa:
 
-### Proteção de páginas
+```text
+POST /participant/registrations/{registration_id}/payments/pix
+```
 
-O arquivo depreciado `middleware.ts` foi substituído por `proxy.ts`.
+A rota pode reutilizar uma tentativa pendente ou paga e criar nova tentativa
+após `expired` ou `error`, conforme decisão final do backend.
 
-Proteção atual:
+## Proteção de páginas
 
 ```text
 /dashboard/*
@@ -137,11 +129,11 @@ Proteção atual:
 /admin/*
   -> exige burnix.access_token
 
-/participante/minhas-inscricoes/*
-  -> reservado para a sessão burnix.participant_access_token
+/minhas-inscricoes/*
+  -> exige burnix.participant_access_token
 ```
 
-A página pública `/eventos/*` permanece sem bloqueio de navegação.
+Uma sessão de organizador não substitui uma sessão de participante.
 
 ## Rotas do backend consumidas
 
@@ -151,84 +143,23 @@ A página pública `/eventos/*` permanece sem bloqueio de navegação.
 GET /public/contracts/{contract_id}
 ```
 
-### Autenticação do organizador
-
-```text
-POST /auth/register
-POST /auth/login
-GET  /auth/me
-```
-
-### Autenticação do participante
+### Participante
 
 ```text
 POST /participant-auth/register
 POST /participant-auth/login
 GET  /participant-auth/me
-```
 
-### Área do participante
-
-```text
 GET  /participant/registrations
 GET  /participant/registrations/{registration_id}
 POST /participant/contracts/{contract_id}/registrations
 POST /participant/registrations/{registration_id}/payments/pix
 ```
 
-### Painel do organizador
+### Organizador
 
-O projeto também mantém os serviços existentes para eventos, inscrições,
-pagamentos, campos dinâmicos, perfil financeiro, integrações, exportações e
-administração global.
-
-A geração manual de Pix pelo organizador usa:
-
-```text
-POST /payments/contracts/{contract_id}/pix
-```
-
-com `client_id` no corpo. O frontend vigente não usa mais as rotas públicas
-legadas de inscrição e pagamento por `client_id`.
-
-## Estrutura relevante
-
-```text
-app/
-├── (auth)/
-├── (dashboard)/
-├── (participant-auth)/participante/
-│   ├── entrar/page.tsx
-│   └── cadastro/page.tsx
-├── api/
-│   ├── backend/[session]/[...path]/route.ts
-│   └── session/
-│       ├── organizer/login/route.ts
-│       ├── participant/login/route.ts
-│       ├── participant/register/route.ts
-│       └── logout/route.ts
-└── eventos/[id]/
-
-hooks/
-├── useAuth.ts
-└── useParticipantAuth.ts
-
-services/
-├── api.ts
-├── auth.ts
-├── participant-api.ts
-└── participant-auth.ts
-
-types/
-├── participant.ts
-└── participant-auth.ts
-
-lib/server/
-├── backend.ts
-└── session.ts
-
-proxy.ts
-```
+O projeto mantém os serviços de eventos, inscrições, pagamentos, campos
+dinâmicos, perfil financeiro, integrações, exportações e administração global.
 
 ## Variáveis de ambiente
 
@@ -239,84 +170,33 @@ API_URL=http://localhost:8000
 # APP_ORIGIN=https://app.seudominio.com
 ```
 
-### `API_URL`
+`API_URL` é usada somente no servidor Next.js para acessar o backend FastAPI.
+Em produção, prefira uma URL interna da infraestrutura.
 
-URL privada usada pelo servidor Next.js para acessar o backend FastAPI.
+`APP_ORIGIN` é opcional e adiciona a origem pública canônica à validação das
+mutações do BFF.
 
-Em produção, prefira uma URL interna da infraestrutura. Não é necessário expor
-a URL do backend ao bundle do navegador.
-
-### `APP_ORIGIN`
-
-Opcional. Origem pública canônica usada como origem confiável adicional nas
-mutações do BFF, especialmente em ambientes com proxy reverso.
-
-Exemplo:
-
-```env
-APP_ORIGIN=https://app.seudominio.com
-```
-
-Em produção, a aplicação deve ser servida por HTTPS para que cookies com
-`Secure` sejam enviados pelo navegador.
-
-## Instalação
+## Desenvolvimento
 
 ```bash
 npm ci
-cp .env.example .env.local
 npm run dev
 ```
 
-Aplicação local:
-
-```text
-http://localhost:3000
-```
-
-## Validações
+## Validação
 
 ```bash
-npm run lint
 npm run typecheck
+npm run lint
 npm run build
 npm run test:bff
 ```
-
-`test:bff` deve ser executado depois do build. Ele inicia um backend simulado e
-uma instância de produção do Next.js para verificar:
-
-- cookie separado de participante;
-- cookie separado de organizador;
-- atributos `HttpOnly`, `Secure`, `SameSite=Lax` e `Path=/`;
-- ausência do JWT nas respostas ao navegador;
-- Bearer aplicado somente no servidor;
-- bloqueio de rota de outra categoria de sessão;
-- redirecionamento do dashboard quando existe apenas sessão de participante;
-- inscrição sem `participant_id` e sem `email` no payload;
-- criação de Pix pela rota autenticada do participante;
-- acesso público ao evento;
-- rejeição de origem cruzada em mutações;
-- logout seletivo por categoria de sessão.
 
 Relatórios detalhados:
 
 ```text
 docs/frontend-stage-1-participant-session.md
 docs/validation-stage-1.md
+docs/frontend-stage-2-participant-registrations.md
+docs/validation-stage-2.md
 ```
-
-## Auditoria de dependências
-
-Foi executado `npm audit fix` sem alterações incompatíveis. O audit final não
-aponta vulnerabilidades altas ou críticas. Permanecem dois avisos moderados
-associados ao PostCSS empacotado pelo Next.js estável `16.2.10`; o próprio npm
-oferece apenas um downgrade incompatível para Next.js 9 como correção automática,
-portanto essa opção não foi aplicada.
-
-## Observação sobre datas de eventos
-
-Os campos `start_date`, `end_date` e `registration_deadline` continuam sendo
-enviados como data/hora local no formato `YYYY-MM-DDTHH:mm:ss`, sem conversão
-para UTC e sem sufixo `Z`. Isso evita deslocamento automático de fuso em campos
-`datetime-local`.

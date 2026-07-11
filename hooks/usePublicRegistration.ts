@@ -4,9 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   createParticipantRegistration,
-  createParticipantRegistrationPix,
-} from "@/services/participant-api";
-import type { ParticipantRegistrationCreatePayload } from "@/types/participant";
+  generateParticipantRegistrationPix,
+} from "@/services/participant-registrations";
+import type { ParticipantRegistrationCreatePayload } from "@/types/participant-registration";
 import type { ParticipantPaymentCreatePayload } from "@/types/payment";
 
 export function useCreateParticipantRegistration(contractId: string | number) {
@@ -42,7 +42,7 @@ export function useCreateParticipantRegistrationPix() {
     }: {
       registrationId: string | number;
       payload?: ParticipantPaymentCreatePayload;
-    }) => createParticipantRegistrationPix(registrationId, payload ?? {}),
+    }) => generateParticipantRegistrationPix(registrationId, payload ?? {}),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["participant-registrations"],
