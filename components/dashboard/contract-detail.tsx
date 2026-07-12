@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { FormFieldsManager } from "@/components/dashboard/form-fields-manager";
+import { EventForm } from "@/components/forms/event-form";
 import { RegistrationsTable } from "@/components/dashboard/registrations-table";
 import { StatusBadge } from "@/components/feedback/status-badge";
 import { Alert } from "@/components/ui/alert";
@@ -24,6 +25,8 @@ import {
   useContractById,
   useContractPayments,
   useContractRegistrations,
+  useContractStatusAction,
+  useUpdateContract,
 } from "@/hooks/useContracts";
 import { useCreateContractPixPayment } from "@/hooks/usePayments";
 import { exportPaymentsCsv, exportRegistrationsCsv } from "@/services/exports";
@@ -34,7 +37,8 @@ import {
   getPaymentStatusLabel,
   getReadableMethod,
 } from "@/lib/format";
-import { getErrorMessage } from "@/lib/get-error-message";
+import { ApiClientError, getErrorMessage } from "@/lib/get-error-message";
+import type { ContractCreatePayload, ContractStatusAction, ContractUpdatePayload } from "@/types/contract";
 import type { PaymentPixResponse } from "@/types/payment";
 
 type ContractDetailProps = {
@@ -104,15 +108,35 @@ export function ContractDetail({ id }: ContractDetailProps) {
   const paymentsQuery = useContractPayments(id);
   const registrationsQuery = useContractRegistrations(id);
   const pixMutation = useCreateContractPixPayment();
+  const updateMutation = useUpdateContract(id);
+  const publishMutation = useContractStatusAction(id, "publish");
+  const closeMutation = useContractStatusAction(id, "close");
+  const cancelMutation = useContractStatusAction(id, "cancel");
+  const reopenMutation = useContractStatusAction(id, "reopen");
 
   const [pixResult, setPixResult] = useState<PaymentPixResponse | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [eventFeedback, setEventFeedback] = useState<{
+    message: string;
+    variant: "success" | "warning";
+  } | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [exportFeedback, setExportFeedback] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"registrations" | "payments" | null>(null);
 
   const contract = contractQuery.data ?? null;
   const payments = paymentsQuery.data ?? [];
   const registrations = registrationsQuery.data ?? [];
+  const relatedDataUnavailable = Boolean(
+    paymentsQuery.error || registrationsQuery.error
+  );
+  const financialLocked =
+    relatedDataUnavailable || payments.length > 0 || registrations.length > 0;
+  const statusActionPending =
+    publishMutation.isPending ||
+    closeMutation.isPending ||
+    cancelMutation.isPending ||
+    reopenMutation.isPending;
 
   function saveCsvFile(blob: Blob, filename: string) {
     const url = window.URL.createObjectURL(blob);
@@ -147,6 +171,86 @@ export function ContractDetail({ id }: ContractDetailProps) {
       setExportFeedback(getErrorMessage(error, "Não foi possível exportar o CSV."));
     } finally {
       setExporting(null);
+    }
+  }
+
+  async function refreshAfterVersionConflict() {
+    await contractQuery.refetch();
+    setIsEditing(false);
+    setEventFeedback({
+      variant: "warning",
+      message:
+        "O evento foi atualizado em outra sessão. Os dados mais recentes foram carregados; revise antes de tentar novamente.",
+    });
+  }
+
+  async function handleUpdateEvent(
+    payload: ContractCreatePayload | ContractUpdatePayload
+  ) {
+    await updateMutation.mutateAsync(payload as ContractUpdatePayload);
+    setIsEditing(false);
+    setEventFeedback({
+      variant: "success",
+      message: "Evento atualizado com sucesso.",
+    });
+  }
+
+  function getStatusMutation(action: ContractStatusAction) {
+    switch (action) {
+      case "publish":
+        return publishMutation;
+      case "close":
+        return closeMutation;
+      case "cancel":
+        return cancelMutation;
+      case "reopen":
+        return reopenMutation;
+    }
+  }
+
+  async function handleStatusAction(action: ContractStatusAction) {
+    if (!contract) return;
+
+    const confirmations: Record<ContractStatusAction, string> = {
+      publish:
+        "Publicar este evento agora? A página pública e as inscrições poderão ficar disponíveis imediatamente.",
+      close:
+        "Encerrar este evento? Novas inscrições serão bloqueadas.",
+      cancel:
+        "Cancelar este evento? Essa ação é terminal e não poderá ser desfeita.",
+      reopen:
+        "Reabrir este evento? O início e o prazo de inscrição precisam estar no futuro.",
+    };
+
+    if (!window.confirm(confirmations[action])) return;
+
+    setEventFeedback(null);
+    try {
+      await getStatusMutation(action).mutateAsync({ version: contract.version });
+      setIsEditing(false);
+      const messages: Record<ContractStatusAction, string> = {
+        publish: "Evento publicado com sucesso.",
+        close: "Evento encerrado com sucesso.",
+        cancel: "Evento cancelado com sucesso.",
+        reopen: "Evento reaberto com sucesso.",
+      };
+      setEventFeedback({ variant: "success", message: messages[action] });
+    } catch (error) {
+      if (
+        error instanceof ApiClientError &&
+        error.code === "event_version_conflict"
+      ) {
+        await refreshAfterVersionConflict();
+        return;
+      }
+
+      setEventFeedback({
+        variant: "warning",
+        message: getErrorMessage(
+          error,
+          "Não foi possível alterar a situação do evento."
+        ),
+      });
     }
   }
 
@@ -234,6 +338,57 @@ export function ContractDetail({ id }: ContractDetailProps) {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {(contract.status === "draft" || contract.status === "published") ? (
+                <Button
+                  variant="secondary"
+                  disabled={statusActionPending || updateMutation.isPending}
+                  onClick={() => {
+                    setEventFeedback(null);
+                    setIsEditing((current) => !current);
+                  }}
+                >
+                  {isEditing ? "Fechar edição" : "Editar"}
+                </Button>
+              ) : null}
+
+              {contract.status === "draft" ? (
+                <Button
+                  disabled={statusActionPending}
+                  onClick={() => handleStatusAction("publish")}
+                >
+                  {publishMutation.isPending ? "Publicando..." : "Publicar"}
+                </Button>
+              ) : null}
+
+              {contract.status === "published" ? (
+                <Button
+                  variant="secondary"
+                  disabled={statusActionPending}
+                  onClick={() => handleStatusAction("close")}
+                >
+                  {closeMutation.isPending ? "Encerrando..." : "Encerrar evento"}
+                </Button>
+              ) : null}
+
+              {(contract.status === "draft" || contract.status === "published") ? (
+                <Button
+                  variant="destructive"
+                  disabled={statusActionPending}
+                  onClick={() => handleStatusAction("cancel")}
+                >
+                  {cancelMutation.isPending ? "Cancelando..." : "Cancelar evento"}
+                </Button>
+              ) : null}
+
+              {contract.status === "closed" ? (
+                <Button
+                  disabled={statusActionPending}
+                  onClick={() => handleStatusAction("reopen")}
+                >
+                  {reopenMutation.isPending ? "Reabrindo..." : "Reabrir evento"}
+                </Button>
+              ) : null}
+
               <Button asChild variant="secondary">
                 <Link href={`/eventos/${contract.id}`}>Ver página pública</Link>
               </Button>
@@ -243,6 +398,37 @@ export function ContractDetail({ id }: ContractDetailProps) {
             </div>
           </div>
         </div>
+
+        {eventFeedback ? (
+          <div className="mb-6">
+            <Alert variant={eventFeedback.variant} title="Evento">
+              <p>{eventFeedback.message}</p>
+            </Alert>
+          </div>
+        ) : null}
+
+        {isEditing ? (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Editar evento</CardTitle>
+              <CardDescription>
+                Altere as informações permitidas. A versão atual do evento é {contract.version}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EventForm
+                key={`${contract.id}-${contract.version}`}
+                mode="edit"
+                contract={contract}
+                financialLocked={financialLocked}
+                isSubmitting={updateMutation.isPending}
+                onSubmit={handleUpdateEvent}
+                onCancel={() => setIsEditing(false)}
+                onVersionConflict={refreshAfterVersionConflict}
+              />
+            </CardContent>
+          </Card>
+        ) : null}
 
         {feedback ? (
           <div className="mb-6">
@@ -322,14 +508,14 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 <div>
                   <p className="text-sm text-slate-500">Início</p>
                   <p className="mt-1 text-sm font-medium text-slate-950">
-                    {formatDate(contract.start_date)}
+                    {formatDate(contract.start_at ?? contract.start_date)}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-sm text-slate-500">Fim</p>
                   <p className="mt-1 text-sm font-medium text-slate-950">
-                    {formatDate(contract.end_date)}
+                    {formatDate(contract.end_at ?? contract.end_date)}
                   </p>
                 </div>
 
@@ -351,6 +537,20 @@ export function ContractDetail({ id }: ContractDetailProps) {
                   <p className="text-sm text-slate-500">Atualizado em</p>
                   <p className="mt-1 text-sm font-medium text-slate-950">
                     {formatDate(contract.updated_at)}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-slate-500">Fuso horário</p>
+                  <p className="mt-1 text-sm font-medium text-slate-950">
+                    {contract.timezone}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-slate-500">Versão de edição</p>
+                  <p className="mt-1 text-sm font-medium text-slate-950">
+                    {contract.version}
                   </p>
                 </div>
 

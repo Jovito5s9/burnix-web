@@ -34,7 +34,7 @@ export async function patchMyBillingProfile(payload: BillingProfilePayload) {
 }
 
 export async function listBillingProfiles(params?: BillingProfileListParams) {
-  const { data } = await api.get<BillingProfile[]>("/billing-profiles/", { params });
+  const { data } = await api.get<BillingProfile[]>("/billing-profiles", { params });
   return data;
 }
 

@@ -8,16 +8,29 @@ import {
   listContractPayments,
   listContractRegistrations,
   listContracts,
+  runContractStatusAction,
   updateContract,
 } from "@/services/contracts";
 import type {
+  Contract,
+  ContractActionPayload,
   ContractCreatePayload,
   ContractListParams,
+  ContractStatusAction,
   ContractUpdatePayload,
 } from "@/types/contract";
 
 function contractListKey(params?: ContractListParams) {
   return ["contracts", params ?? {}] as const;
+}
+
+function useSyncContractCache() {
+  const queryClient = useQueryClient();
+
+  return async (contract: Contract) => {
+    queryClient.setQueryData(["contracts", contract.id], contract);
+    await queryClient.invalidateQueries({ queryKey: ["contracts"] });
+  };
 }
 
 export function useContracts(params?: ContractListParams) {
@@ -65,30 +78,33 @@ export function useContractPayments(contractId: string | number) {
 }
 
 export function useCreateContract() {
-  const queryClient = useQueryClient();
+  const syncContractCache = useSyncContractCache();
 
   return useMutation({
     mutationFn: (payload: ContractCreatePayload) => createContract(payload),
-    onSuccess: async (createdContract) => {
-      await queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      await queryClient.invalidateQueries({
-        queryKey: ["contracts", createdContract.id],
-      });
-    },
+    onSuccess: syncContractCache,
   });
 }
 
 export function useUpdateContract(id: string | number) {
-  const queryClient = useQueryClient();
+  const syncContractCache = useSyncContractCache();
 
   return useMutation({
     mutationFn: (payload: ContractUpdatePayload) => updateContract(id, payload),
-    onSuccess: async (updatedContract) => {
-      await queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      await queryClient.invalidateQueries({
-        queryKey: ["contracts", updatedContract.id],
-      });
-    },
+    onSuccess: syncContractCache,
+  });
+}
+
+export function useContractStatusAction(
+  id: string | number,
+  action: ContractStatusAction
+) {
+  const syncContractCache = useSyncContractCache();
+
+  return useMutation({
+    mutationFn: (payload: ContractActionPayload) =>
+      runContractStatusAction(id, action, payload),
+    onSuccess: syncContractCache,
   });
 }
 
@@ -99,7 +115,7 @@ export function useDeleteContract() {
     mutationFn: (id: string | number) => deleteContract(id),
     onSuccess: async (_data, deletedId) => {
       await queryClient.invalidateQueries({ queryKey: ["contracts"] });
-      await queryClient.invalidateQueries({ queryKey: ["contracts", deletedId] });
+      queryClient.removeQueries({ queryKey: ["contracts", deletedId] });
     },
   });
 }

@@ -7,7 +7,7 @@ import type {
 
 export async function listFormFields(contractId: string | number) {
   const { data } = await api.get<ContractFormField[]>(
-    `/contracts/${contractId}/form-fields/`
+    `/contracts/${contractId}/form-fields`
   );
   return data;
 }
@@ -17,7 +17,7 @@ export async function createFormField(
   payload: ContractFormFieldPayload
 ) {
   const { data } = await api.post<ContractFormField>(
-    `/contracts/${contractId}/form-fields/`,
+    `/contracts/${contractId}/form-fields`,
     payload
   );
   return data;

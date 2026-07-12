@@ -8,17 +8,28 @@ export type Contract = {
   title: string;
   description: string | null;
   status: ContractStatus;
+  version: number;
 
   price: string;
-  currency: string;
+  currency: "BRL";
 
   capacity: number | null;
+
+  /** Campos legados mantidos pelo backend durante a transição temporal. */
   start_date: string | null;
   end_date: string | null;
+
+  /** Fonte temporal precisa do evento. */
+  start_at: string | null;
+  end_at: string | null;
+  timezone: string;
   registration_deadline: string | null;
 
   payment_config: Record<string, unknown> | null;
 
+  published_at: string | null;
+  closed_at: string | null;
+  cancelled_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -26,19 +37,37 @@ export type Contract = {
 export type ContractCreatePayload = {
   title: string;
   description?: string | null;
-  status?: ContractStatus;
+  status?: Extract<ContractStatus, "draft" | "published">;
   price?: string;
-  currency?: string;
+  currency?: "BRL";
   capacity?: number | null;
-  start_date?: string | null;
-  end_date?: string | null;
+  start_at?: string | null;
+  end_at?: string | null;
+  timezone?: string;
   registration_deadline?: string | null;
   payment_config?: Record<string, unknown> | null;
 };
 
-export type ContractUpdatePayload = Partial<ContractCreatePayload> & {
+export type ContractUpdatePayload = {
+  version: number;
   client_id?: number | null;
+  title?: string;
+  description?: string | null;
+  price?: string;
+  currency?: "BRL";
+  capacity?: number | null;
+  start_at?: string | null;
+  end_at?: string | null;
+  timezone?: string;
+  registration_deadline?: string | null;
+  payment_config?: Record<string, unknown> | null;
 };
+
+export type ContractActionPayload = {
+  version: number;
+};
+
+export type ContractStatusAction = "publish" | "close" | "cancel" | "reopen";
 
 export type ContractListParams = {
   skip?: number;

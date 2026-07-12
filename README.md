@@ -1,48 +1,37 @@
 # Burnix Web
 
-Aplicação web para criar eventos, receber inscrições e acompanhar pagamentos por Pix. A experiência é separada entre organizadores, participantes e administração, com textos preparados para uso em produção.
+Frontend web da Burnix para organizadores, participantes e administração. O projeto usa Next.js App Router, React, TanStack Query e um BFF interno para manter os tokens de sessão fora do JavaScript do navegador.
 
-## Principais recursos
+## Runtime reproduzível
 
-### Para participantes
+O projeto fixa as versões usadas no desenvolvimento, CI e produção:
 
-- Consultar a página pública de um evento.
-- Criar uma conta ou entrar com segurança.
-- Enviar a inscrição com os dados solicitados pelo organizador.
-- Pagar por Pix usando QR Code ou código copia e cola.
-- Acompanhar inscrições e pagamentos em **Minhas inscrições**.
-- Gerar um novo Pix quando o anterior expirar.
+```text
+Node.js 22.16.0
+npm 10.9.2
+Next.js 16.2.10
+React 19.2.7
+React DOM 19.2.7
+```
 
-### Para organizadores
+As versões das dependências estão registradas sem intervalos no `package.json` e resolvidas no `package-lock.json`.
 
-- Criar, publicar e acompanhar eventos.
-- Personalizar as perguntas do formulário de inscrição.
-- Consultar participantes e pagamentos.
-- Gerar Pix para uma inscrição quando necessário.
-- Exportar relatórios em CSV.
-- Configurar a chave Pix e os dados de recebimento.
+Use o Node definido em `.nvmrc`:
 
-### Para administração
+```bash
+nvm use
+node --version
+npm --version
+npm list next react react-dom
+```
 
-- Consultar contas de organizadores, eventos, participantes e pagamentos.
-- Acompanhar os principais dados da plataforma com paginação e status traduzidos.
+A instalação deve ser feita com o lockfile:
 
-## Experiência de produção
+```bash
+npm ci
+```
 
-A Etapa 6 revisa os textos apresentados na interface para:
-
-- remover referências técnicas e termos internos;
-- usar mensagens claras em erros, carregamentos e estados vazios;
-- traduzir status antes de exibi-los;
-- padronizar **E-mail**, **Pix**, **QR Code**, **Inscrição**, **Participante**, **Evento** e **Pagamento**;
-- usar somente **participante** e **evento** na comunicação com usuários;
-- ocultar detalhes técnicos de falhas e mostrar orientações seguras.
-
-## Requisitos
-
-- Node.js 20 ou superior.
-- npm 10 ou superior.
-- Serviço da aplicação disponível para uso local ou em ambiente publicado.
+Não use `npm install` em pipelines ou imagens de produção para evitar alterações silenciosas de versão.
 
 ## Configuração
 
@@ -52,12 +41,14 @@ Copie o arquivo de exemplo:
 cp .env.example .env.local
 ```
 
-Variáveis disponíveis:
+Variáveis principais:
 
 ```env
 API_URL=http://localhost:8000
 # APP_ORIGIN=https://app.seudominio.com
 ```
+
+`API_URL` é usada apenas no servidor pelo BFF. O navegador consome as rotas internas em `/api/backend/*` e não recebe o token JWT.
 
 ## Desenvolvimento
 
@@ -66,53 +57,79 @@ npm ci
 npm run dev
 ```
 
-A aplicação ficará disponível, por padrão, em `http://localhost:3000`.
+A aplicação fica disponível, por padrão, em `http://localhost:3000`.
+
+## Eventos
+
+O frontend utiliza o contrato temporal atual do backend:
+
+- `start_at` e `end_at` para data e horário precisos;
+- `timezone` com identificador IANA;
+- `registration_deadline` para o prazo de inscrição;
+- `version` em toda edição e ação de status.
+
+A criação e a edição compartilham `components/forms/event-form.tsx`. As ações de ciclo de vida usam endpoints explícitos:
+
+```text
+POST /contracts/{id}/publish
+POST /contracts/{id}/close
+POST /contracts/{id}/cancel
+POST /contracts/{id}/reopen
+```
+
+Quando o evento possui inscrições ou pagamentos, preço e moeda são bloqueados na interface. O backend continua sendo a autoridade final para essa regra.
+
+## BFF e sessões
+
+O BFF separa três contextos:
+
+```text
+/api/backend/organizer
+/api/backend/participant
+/api/backend/public
+```
+
+Características principais:
+
+- cookies `HttpOnly`, `SameSite=Lax` e `Secure` em produção;
+- URLs canônicas sem barra final para coleções;
+- redirects do backend não são seguidos automaticamente;
+- respostas `3xx` inesperadas são convertidas em `502 unexpected_backend_redirect`;
+- `X-Request-ID` é propagado ao backend, devolvido ao navegador e incluído nos logs do BFF;
+- tokens não são enviados ao código cliente.
 
 ## Validação
 
-Execute a mesma sequência usada na integração contínua:
+Sequência equivalente ao CI:
 
 ```bash
+node --version
+npm --version
+npm list next react react-dom
+npm ci
 npm run typecheck
 npm run lint
-npm run build
 npm run test
+npm run test:stage4
+npm run build
+npm run test:bff
 npm run test:e2e
 ```
 
-Comandos adicionais:
+`npm run test:bff` executa a aplicação com `next start` e valida sessões, URLs canônicas, coleções do organizador, propagação de request ID e tratamento de redirects.
 
-```bash
-npm run test:watch
-npm run test:e2e:ui
-npm run test:bff
-npm run test:stage4
-```
+## Estrutura técnica
 
-## Arquitetura técnica
-
-Esta seção mantém os termos técnicos necessários à manutenção do projeto.
-
-- Next.js 16 com App Router e Route Handlers.
-- React 19 e TanStack Query.
-- BFF no Next.js para separar as sessões de organizador e participante.
-- Cookies `HttpOnly`, `SameSite=Lax` e `Secure` em produção.
-- Integração do backend FastAPI com pagamentos Pix/OpenPix.
-- Vitest, React Testing Library e MSW para testes de componentes e contratos HTTP.
-- Playwright para jornadas completas no navegador.
-- Workflow de CI em `.github/workflows/frontend-ci.yml`.
-
-As rotas internas, regras de sessão, idempotência, tratamento de duplicidade e ciclo de pagamentos continuam documentados nos arquivos técnicos em `docs/`.
-
-## Documentação
-
-- `docs/frontend-stage-1-participant-session.md`
-- `docs/frontend-stage-2-participant-registrations.md`
-- `docs/frontend-stage-3-registration-duplicate-recovery.md`
-- `docs/frontend-stage-4-openpix-participant-flow.md`
-- `docs/frontend-stage-5-tests.md`
-- `docs/frontend-stage-6-production-copy.md`
-- `docs/validation-stage-6.md`
+- `app/`: páginas, layouts e Route Handlers do BFF;
+- `components/`: componentes de interface e formulários reutilizáveis;
+- `hooks/`: integração entre React Query e serviços;
+- `services/`: clientes HTTP e contrato com o BFF;
+- `types/`: tipos retornados e aceitos pelo backend;
+- `lib/`: regras utilitárias, sessão e comunicação server-side;
+- `tests/unit/`: testes de componentes e utilitários;
+- `tests/integration/`: contrato do proxy e helpers de integração;
+- `tests/e2e/`: jornadas completas no navegador;
+- `scripts/smoke-bff.mjs`: smoke test do build de produção.
 
 ## Licença
 

@@ -1,6 +1,7 @@
 ./.env.example
 ./.github/workflows/frontend-ci.yml
 ./.gitignore
+./.nvmrc
 ./LICENSE.md
 ./README.md
 ./app/(auth)/login/page.tsx
@@ -62,6 +63,7 @@
 ./components/feedback/status-badge.tsx
 ./components/forms/.gitkeep
 ./components/forms/billing-profile-form.tsx
+./components/forms/event-form.tsx
 ./components/forms/login-form.tsx
 ./components/forms/participant-login-form.tsx
 ./components/forms/participant-register-form.tsx
@@ -86,12 +88,14 @@
 ./components/ui/input.tsx
 ./components/ui/label.tsx
 ./components/ui/spinner.tsx
+./docs/frontend-runtime-bff-events.md
 ./docs/frontend-stage-1-participant-session.md
 ./docs/frontend-stage-2-participant-registrations.md
 ./docs/frontend-stage-3-registration-duplicate-recovery.md
 ./docs/frontend-stage-4-openpix-participant-flow.md
 ./docs/frontend-stage-5-tests.md
 ./docs/frontend-stage-6-production-copy.md
+./docs/validation-runtime-bff-events.md
 ./docs/validation-stage-1.md
 ./docs/validation-stage-2.md
 ./docs/validation-stage-3.md
@@ -161,10 +165,13 @@
 ./tests/e2e/payment-confirmation.spec.ts
 ./tests/e2e/support/mock-api.ts
 ./tests/fixtures/participant.ts
+./tests/integration/backend-proxy.test.ts
 ./tests/mocks/server.ts
 ./tests/setup/navigation-mock.ts
 ./tests/setup/render.tsx
 ./tests/setup/vitest.setup.ts
+./tests/unit/contracts-service.test.ts
+./tests/unit/event-form.test.tsx
 ./tests/unit/my-registrations-page.test.tsx
 ./tests/unit/pix-payment-box.test.tsx
 ./tests/unit/production-copy.test.ts

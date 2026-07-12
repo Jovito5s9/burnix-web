@@ -37,7 +37,7 @@ function normalizePaymentPixResponse(data: unknown): PaymentPixResponse {
 
 /** Rotas internas do organizador. Nunca são usadas pelo fluxo público. */
 export async function listPayments(params?: PaymentListParams) {
-  const { data } = await api.get<Payment[]>("/payments/", { params });
+  const { data } = await api.get<Payment[]>("/payments", { params });
   return data;
 }
 

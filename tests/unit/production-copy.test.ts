@@ -37,6 +37,15 @@ describe("textos de produção", () => {
 
     expect(
       getErrorMessage(
+        new ApiClientError("event_invalid_timezone", {
+          status: 422,
+          code: "event_invalid_timezone",
+        })
+      )
+    ).toBe("Informe um fuso horário válido para o evento.");
+
+    expect(
+      getErrorMessage(
         new ApiClientError(
           "Backend endpoint /payments failed with correlation ID abc-123",
           { status: 500 }

@@ -1,15 +1,17 @@
 import { api } from "@/services/api";
 import type {
   Contract,
+  ContractActionPayload,
   ContractCreatePayload,
   ContractListParams,
+  ContractStatusAction,
   ContractUpdatePayload,
 } from "@/types/contract";
 import type { Payment } from "@/types/payment";
 import type { Registration } from "@/types/registration";
 
 export async function listContracts(params?: ContractListParams) {
-  const { data } = await api.get<Contract[]>("/contracts/", { params });
+  const { data } = await api.get<Contract[]>("/contracts", { params });
   return data;
 }
 
@@ -19,7 +21,7 @@ export async function getContract(id: string | number) {
 }
 
 export async function createContract(payload: ContractCreatePayload) {
-  const { data } = await api.post<Contract>("/contracts/", payload);
+  const { data } = await api.post<Contract>("/contracts", payload);
   return data;
 }
 
@@ -28,6 +30,18 @@ export async function updateContract(
   payload: ContractUpdatePayload
 ) {
   const { data } = await api.patch<Contract>(`/contracts/${id}`, payload);
+  return data;
+}
+
+export async function runContractStatusAction(
+  id: string | number,
+  action: ContractStatusAction,
+  payload: ContractActionPayload
+) {
+  const { data } = await api.post<Contract>(
+    `/contracts/${id}/${action}`,
+    payload
+  );
   return data;
 }
 

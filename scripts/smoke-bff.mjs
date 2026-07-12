@@ -25,10 +25,11 @@ function readRequestBody(request) {
   });
 }
 
-function sendJson(response, status, body) {
+function sendJson(response, status, body, extraHeaders = {}) {
   response.writeHead(status, {
     "content-type": "application/json",
     "cache-control": "no-store",
+    ...extraHeaders,
   });
   response.end(JSON.stringify(body));
 }
@@ -42,6 +43,7 @@ async function createMockBackend() {
       method: request.method,
       url: request.url,
       authorization: request.headers.authorization ?? null,
+      requestId: request.headers["x-request-id"] ?? null,
       body,
     });
 
@@ -172,6 +174,48 @@ async function createMockBackend() {
         role: "contractor",
         is_active: true,
       });
+    }
+
+    if (
+      request.method === "GET" &&
+      request.url === "/contracts?skip=0&limit=50"
+    ) {
+      assert.equal(request.headers.authorization, "Bearer organizer-secret-token");
+      assert.equal(request.headers["x-request-id"], "bff-smoke-collections");
+      return sendJson(response, 200, [], {
+        "x-request-id": request.headers["x-request-id"],
+      });
+    }
+
+    if (
+      request.method === "GET" &&
+      request.url === "/payments?skip=0&limit=50"
+    ) {
+      assert.equal(request.headers.authorization, "Bearer organizer-secret-token");
+      assert.equal(request.headers["x-request-id"], "bff-smoke-collections");
+      return sendJson(response, 200, [], {
+        "x-request-id": request.headers["x-request-id"],
+      });
+    }
+
+    if (
+      request.method === "GET" &&
+      request.url === "/clients?skip=0&limit=100"
+    ) {
+      assert.equal(request.headers.authorization, "Bearer organizer-secret-token");
+      assert.equal(request.headers["x-request-id"], "bff-smoke-collections");
+      return sendJson(response, 200, [], {
+        "x-request-id": request.headers["x-request-id"],
+      });
+    }
+
+    if (request.method === "GET" && request.url === "/contracts/redirect-test") {
+      response.writeHead(307, {
+        location: "/contracts/redirect-target",
+        "x-request-id": request.headers["x-request-id"] ?? "backend-redirect",
+      });
+      response.end();
+      return;
     }
 
     if (
@@ -487,6 +531,43 @@ async function main() {
     assert.equal(organizerMe.status, 200);
     assert.equal((await organizerMe.json()).id, 3);
 
+    for (const path of [
+      "/contracts?skip=0&limit=50",
+      "/payments?skip=0&limit=50",
+      "/clients?skip=0&limit=100",
+    ]) {
+      const collectionResponse = await fetch(
+        `${origin}/api/backend/organizer${path}`,
+        {
+          headers: {
+            cookie: organizerCookie,
+            "x-request-id": "bff-smoke-collections",
+          },
+          redirect: "manual",
+        }
+      );
+      assert.equal(collectionResponse.status, 200);
+      assert.equal(
+        collectionResponse.headers.get("x-request-id"),
+        "bff-smoke-collections"
+      );
+      assert.equal(collectionResponse.headers.get("location"), null);
+    }
+
+    const unexpectedRedirect = await fetch(
+      `${origin}/api/backend/organizer/contracts/redirect-test`,
+      {
+        headers: { cookie: organizerCookie },
+        redirect: "manual",
+      }
+    );
+    assert.equal(unexpectedRedirect.status, 502);
+    assert.equal(unexpectedRedirect.headers.get("location"), null);
+    assert.equal(
+      (await unexpectedRedirect.json()).detail.code,
+      "unexpected_backend_redirect"
+    );
+
     const dashboardWithParticipantOnly = await fetch(`${origin}/dashboard`, {
       headers: { cookie: participantCookie },
       redirect: "manual",
@@ -527,7 +608,7 @@ async function main() {
     assert.match(logoutCookie, /burnix\.participant_access_token=/);
     assert.equal(logoutCookie.includes("burnix.access_token="), false);
 
-    console.log("Smoke BFF aprovado: sessões separadas, recuperação do 409, metadados seguros e idempotência do Pix preservada pelo BFF.");
+    console.log("Smoke BFF aprovado: sessões separadas, URLs canônicas, request ID, redirects controlados, recuperação do 409 e idempotência do Pix preservada.");
   } catch (error) {
     console.error(logs);
     throw error;

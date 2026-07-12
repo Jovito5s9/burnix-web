@@ -45,9 +45,9 @@ assert.doesNotMatch(pollingHook, /getPayment|\/payments\/\$\{.*payment/i);
 for (const expected of [
   'pending: "Aguardando pagamento"',
   'paid: "Pagamento confirmado"',
-  'expired: "Este Pix expirou. Gere uma nova cobrança"',
-  'error: "Não foi possível gerar o Pix"',
-  'not_required: "Este evento é gratuito"',
+  'expired: "Pix expirado"',
+  'error: "Pagamento não concluído"',
+  'not_required: "Evento gratuito"',
 ]) {
   assert.ok(format.includes(expected), `Status ausente: ${expected}`);
 }

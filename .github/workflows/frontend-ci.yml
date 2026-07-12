@@ -7,7 +7,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -16,10 +16,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
-      - name: Install dependencies
+      - name: Verify runtime versions
+        run: |
+          node --version
+          npm --version
+          npm list next react react-dom
+
+      - name: Install dependencies from lockfile
         run: npm ci
 
       - name: Install Playwright Chromium
@@ -31,11 +37,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build
-        run: npm run build
-
       - name: Unit and integration tests
         run: npm run test
+
+      - name: Validate participant payment flow contract
+        run: npm run test:stage4
+
+      - name: Production build
+        run: npm run build
+
+      - name: BFF production smoke test
+        run: npm run test:bff
 
       - name: End-to-end tests
         run: npm run test:e2e

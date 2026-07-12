@@ -58,6 +58,34 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   event_not_published: "Evento não encontrado.",
   event_registration_closed: "As inscrições para este evento estão encerradas.",
   event_capacity_reached: "As vagas deste evento já foram preenchidas.",
+  event_version_conflict:
+    "O evento foi alterado em outra sessão. Recarregue os dados e tente novamente.",
+  event_invalid_timezone: "Informe um fuso horário válido para o evento.",
+  event_invalid_temporal_range:
+    "Revise as datas e os horários informados para o evento.",
+  event_invalid_price: "Informe um preço válido, igual ou maior que zero.",
+  event_invalid_capacity:
+    "Informe uma capacidade válida, igual ou maior que zero.",
+  event_publish_requirements_not_met:
+    "Preencha os dados obrigatórios antes de publicar o evento.",
+  event_billing_profile_required:
+    "Configure o perfil de cobrança antes de publicar um evento pago.",
+  event_openpix_not_active:
+    "Ative a integração de pagamentos antes de publicar um evento pago.",
+  event_invalid_status_transition:
+    "Essa mudança de situação não é permitida para o evento.",
+  event_reopen_not_allowed:
+    "O evento só pode ser reaberto com início e prazo de inscrição futuros.",
+  event_financial_fields_locked:
+    "Preço e moeda não podem ser alterados depois da primeira inscrição ou pagamento.",
+  event_capacity_below_registrations:
+    "A capacidade não pode ser menor que o número de inscrições ativas.",
+  event_published_date_must_be_future:
+    "As datas alteradas de um evento publicado precisam estar no futuro.",
+  event_form_field_in_use:
+    "Este campo já possui respostas e não pode ter sua chave ou tipo alterados.",
+  unexpected_backend_redirect:
+    "O serviço respondeu de forma inesperada. Tente novamente em alguns instantes.",
   registration_already_exists: "Você já possui uma inscrição neste evento.",
   registration_not_found: "Inscrição não encontrada.",
   registration_payment_not_allowed:
@@ -99,9 +127,13 @@ const FIELD_LABELS: Record<string, string> = {
   title: "Título",
   description: "Descrição",
   price: "Preço",
+  currency: "Moeda",
   capacity: "Capacidade",
   start_date: "Início",
   end_date: "Fim",
+  start_at: "Início",
+  end_at: "Fim",
+  timezone: "Fuso horário",
   registration_deadline: "Prazo de inscrição",
 };
 

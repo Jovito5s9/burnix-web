@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import {
+  getOrCreateRequestId,
   invalidOriginResponse,
   isTrustedRequestOrigin,
   readJsonBody,
@@ -19,7 +20,8 @@ function isLogoutScope(value: unknown): value is LogoutScope {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isTrustedRequestOrigin(request)) return invalidOriginResponse();
+  const requestId = getOrCreateRequestId(request);
+  if (!isTrustedRequestOrigin(request)) return invalidOriginResponse(requestId);
 
   const payload = (await readJsonBody(request)) as { session?: unknown } | null;
   const scope = isLogoutScope(payload?.session) ? payload.session : "all";
@@ -39,5 +41,6 @@ export async function POST(request: NextRequest) {
   }
 
   response.headers.set("cache-control", "no-store");
+  response.headers.set("x-request-id", requestId);
   return response;
 }

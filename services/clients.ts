@@ -7,12 +7,12 @@ import type {
 } from "@/types/client";
 
 export async function listClients(params?: ClientListParams) {
-  const { data } = await api.get<Client[]>("/clients/", { params });
+  const { data } = await api.get<Client[]>("/clients", { params });
   return data;
 }
 
 export async function createClient(payload: ClientCreatePayload) {
-  const { data } = await api.post<Client>("/clients/", payload);
+  const { data } = await api.post<Client>("/clients", payload);
   return data;
 }
 

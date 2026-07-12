@@ -1,41 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
+
+import { EventForm } from "@/components/forms/event-form";
+import { StatusBadge } from "@/components/feedback/status-badge";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { StatusBadge } from "@/components/feedback/status-badge";
 import { useContracts, useCreateContract } from "@/hooks/useContracts";
-import { toApiLocalDateTime, compareLocalDateTimes } from "@/lib/datetime";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/format";
 import { getErrorMessage } from "@/lib/get-error-message";
-import type { ContractCreatePayload, ContractStatus } from "@/types/contract";
+import type { ContractCreatePayload, ContractUpdatePayload } from "@/types/contract";
 
 const PAGE_SIZE = 20;
-
-function getNullableString(value: FormDataEntryValue | null) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
-
-function getNullableNumber(value: FormDataEntryValue | null) {
-  if (typeof value !== "string" || !value.trim()) {
-    return null;
-  }
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 export function ContractsPage() {
   const [page, setPage] = useState(0);
@@ -47,63 +34,23 @@ export function ContractsPage() {
     [page]
   );
 
-  const { contracts, total, isLoading, isFetching, error, refetch } = useContracts(params);
+  const { contracts, total, isLoading, isFetching, error, refetch } =
+    useContracts(params);
   const createContractMutation = useCreateContract();
 
-  async function handleCreateEvent(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFeedback(null);
-
-    const formData = new FormData(event.currentTarget);
-    const title = getNullableString(formData.get("title"));
-    const price = getNullableString(formData.get("price")) ?? "0.00";
-    const status = (getNullableString(formData.get("status")) ?? "draft") as ContractStatus;
-
-    if (!title) {
-      setFeedback("Informe um título para criar o evento.");
-      return;
-    }
-
-    const startDate = toApiLocalDateTime(formData.get("start_date"));
-    const endDate = toApiLocalDateTime(formData.get("end_date"));
-    const registrationDeadline = toApiLocalDateTime(
-      formData.get("registration_deadline")
+  async function handleCreateEvent(
+    payload: ContractCreatePayload | ContractUpdatePayload
+  ) {
+    const created = await createContractMutation.mutateAsync(
+      payload as ContractCreatePayload
     );
-
-    const endVsStart = compareLocalDateTimes(endDate, startDate);
-    if (endVsStart !== null && endVsStart <= 0) {
-      setFeedback("A data de fim precisa ser posterior à data de início do evento.");
-      return;
-    }
-
-    const deadlineVsStart = compareLocalDateTimes(registrationDeadline, startDate);
-    if (deadlineVsStart !== null && deadlineVsStart > 0) {
-      setFeedback("O prazo de inscrição não pode ser posterior ao início do evento.");
-      return;
-    }
-
-    const payload: ContractCreatePayload = {
-      title,
-      description: getNullableString(formData.get("description")),
-      status,
-      price,
-      currency: getNullableString(formData.get("currency")) ?? "BRL",
-      capacity: getNullableNumber(formData.get("capacity")),
-      start_date: startDate,
-      end_date: endDate,
-      registration_deadline: registrationDeadline,
-      payment_config: null,
-    };
-
-    try {
-      await createContractMutation.mutateAsync(payload);
-      event.currentTarget.reset();
-      setIsCreateFormOpen(false);
-      setPage(0);
-      setFeedback("Evento criado com sucesso.");
-    } catch (err) {
-      setFeedback(getErrorMessage(err, "Não foi possível criar o evento."));
-    }
+    setIsCreateFormOpen(false);
+    setPage(0);
+    setFeedback(
+      created.status === "published"
+        ? "Evento criado e publicado com sucesso."
+        : "Evento criado como rascunho com sucesso."
+    );
   }
 
   if (isLoading) {
@@ -137,12 +84,19 @@ export function ContractsPage() {
           <Badge>Eventos</Badge>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Lista de eventos</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+                Lista de eventos
+              </h1>
               <p className="mt-2 max-w-2xl text-slate-600">
                 Crie, publique e acompanhe todos os seus eventos.
               </p>
             </div>
-            <Button onClick={() => setIsCreateFormOpen((current) => !current)}>
+            <Button
+              onClick={() => {
+                setFeedback(null);
+                setIsCreateFormOpen((current) => !current);
+              }}
+            >
               {isCreateFormOpen ? "Fechar formulário" : "Criar evento"}
             </Button>
           </div>
@@ -150,10 +104,7 @@ export function ContractsPage() {
 
         {feedback ? (
           <div className="mb-6">
-            <Alert
-              variant={feedback.includes("sucesso") ? "success" : "warning"}
-              title="Eventos"
-            >
+            <Alert variant="success" title="Eventos">
               <p>{feedback}</p>
             </Alert>
           </div>
@@ -164,91 +115,16 @@ export function ContractsPage() {
             <CardHeader>
               <CardTitle>Novo evento</CardTitle>
               <CardDescription>
-                Preencha as informações abaixo para criar um novo evento.
+                Preencha as informações e escolha entre salvar como rascunho ou publicar imediatamente.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="grid gap-4 md:grid-cols-2" onSubmit={handleCreateEvent}>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="title">Título</Label>
-                  <Input id="title" name="title" placeholder="Nome do evento" required />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows={4}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
-                    placeholder="Descrição pública ou interna do evento"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <select
-                    id="status"
-                    name="status"
-                    defaultValue="draft"
-                    className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
-                  >
-                    <option value="draft">Rascunho</option>
-                    <option value="published">Publicado</option>
-                    <option value="closed">Encerrado</option>
-                    <option value="cancelled">Cancelado</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="capacity">Capacidade</Label>
-                  <Input id="capacity" name="capacity" type="number" min="0" placeholder="Ex.: 100" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="price">Preço</Label>
-                  <Input id="price" name="price" type="number" step="0.01" min="0" defaultValue="0.00" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Moeda</Label>
-                  <Input id="currency" name="currency" defaultValue="BRL" maxLength={3} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="start_date">Início</Label>
-                  <Input id="start_date" name="start_date" type="datetime-local" />
-                  <p className="text-xs text-slate-500">
-                    Informe a data e o horário conforme serão exibidos no evento.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="end_date">Fim</Label>
-                  <Input id="end_date" name="end_date" type="datetime-local" />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="registration_deadline">Prazo de inscrição</Label>
-                  <Input id="registration_deadline" name="registration_deadline" type="datetime-local" />
-                  <p className="text-xs text-slate-500">
-                    Deve ser igual ou anterior ao início do evento.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2 md:col-span-2">
-                  <Button type="submit" disabled={createContractMutation.isPending}>
-                    {createContractMutation.isPending ? "Criando..." : "Criar evento"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setIsCreateFormOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
+              <EventForm
+                mode="create"
+                isSubmitting={createContractMutation.isPending}
+                onSubmit={handleCreateEvent}
+                onCancel={() => setIsCreateFormOpen(false)}
+              />
             </CardContent>
           </Card>
         ) : null}
@@ -286,7 +162,9 @@ export function ContractsPage() {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-semibold text-slate-950">{contract.title}</h3>
+                          <h3 className="text-lg font-semibold text-slate-950">
+                            {contract.title}
+                          </h3>
                           <StatusBadge kind="contract" status={contract.status} />
                         </div>
                         <p className="text-sm text-slate-600">
@@ -294,18 +172,22 @@ export function ContractsPage() {
                         </p>
                         <div className="grid gap-2 text-xs text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
                           <span>Capacidade: {formatNumber(contract.capacity)}</span>
-                          <span>Início: {formatDate(contract.start_date)}</span>
-                          <span>Fim: {formatDate(contract.end_date)}</span>
+                          <span>Início: {formatDate(contract.start_at ?? contract.start_date)}</span>
+                          <span>Fim: {formatDate(contract.end_at ?? contract.end_date)}</span>
                           <span>Prazo: {formatDate(contract.registration_deadline)}</span>
                         </div>
-                        <p className="text-xs text-slate-500">Criado em {formatDate(contract.created_at)}</p>
+                        <p className="text-xs text-slate-500">
+                          Versão {contract.version} · atualizado em {formatDate(contract.updated_at)}
+                        </p>
                       </div>
 
                       <div className="flex flex-col gap-2 text-left lg:text-right">
                         <span className="text-xl font-semibold text-slate-950">
                           {formatCurrency(Number(contract.price), contract.currency)}
                         </span>
-                        <span className="text-xs uppercase tracking-wide text-slate-500">{contract.currency}</span>
+                        <span className="text-xs uppercase tracking-wide text-slate-500">
+                          {contract.currency}
+                        </span>
                         <div className="flex flex-wrap gap-2 lg:justify-end">
                           <Button asChild variant="secondary" size="sm">
                             <Link href={`/contracts/${contract.id}`}>Abrir detalhe</Link>
@@ -319,7 +201,9 @@ export function ContractsPage() {
             )}
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-slate-500">Página {page + 1}{total > 0 ? ` · ${total} eventos` : ""}</p>
+              <p className="text-sm text-slate-500">
+                Página {page + 1}{total > 0 ? ` · ${total} eventos` : ""}
+              </p>
               <div className="flex gap-2">
                 <Button
                   variant="secondary"
