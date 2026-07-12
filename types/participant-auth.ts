@@ -11,6 +11,7 @@ export type ParticipantRegisterPayload = ParticipantLoginPayload;
 export type ParticipantBackendAuthResponse = {
   access_token: string;
   token_type: string;
+  expires_in?: number;
   participant: Participant;
 };
 

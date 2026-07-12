@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,11 @@ import {
   formatDate,
   getParticipantPaymentStatusLabel,
 } from "@/lib/format";
-import { getErrorMessage } from "@/lib/get-error-message";
+import { useRateLimitCountdown } from "@/hooks/useRateLimitCountdown";
+import {
+  getErrorMessage,
+  isApiRateLimitError,
+} from "@/lib/get-error-message";
 import { isParticipantPaymentTerminal } from "@/lib/participant-registration-query";
 import type {
   ParticipantRegistrationDetail,
@@ -65,6 +69,14 @@ export function PixPaymentBox({
   onGeneratePix,
 }: PixPaymentBoxProps) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const generationRateLimit = useRateLimitCountdown();
+  const startGenerationRateLimit = generationRateLimit.startFromError;
+
+  useEffect(() => {
+    if (generationError) {
+      startGenerationRateLimit(generationError);
+    }
+  }, [generationError, startGenerationRateLimit]);
 
   const registrationPaymentStatus =
     registration.latest_payment?.status ?? registration.payment_status;
@@ -244,10 +256,15 @@ export function PixPaymentBox({
       ) : null}
 
       {canGeneratePix ? (
-        <Button onClick={onGeneratePix} disabled={isGenerating}>
+        <Button
+          onClick={onGeneratePix}
+          disabled={isGenerating || generationRateLimit.isRateLimited}
+        >
           {isGenerating
             ? "Gerando Pix..."
-            : paymentStatus === "expired"
+            : generationRateLimit.isRateLimited
+              ? `Tente novamente em ${generationRateLimit.secondsRemaining}s`
+              : paymentStatus === "expired"
               ? "Gerar novo Pix"
               : paymentStatus === "error"
                 ? "Tentar novamente"
@@ -255,13 +272,23 @@ export function PixPaymentBox({
         </Button>
       ) : null}
 
-      {generationError ? (
-        <Alert variant="destructive" title="Não foi possível gerar o Pix">
+      {generationError &&
+      (!isApiRateLimitError(generationError) || generationRateLimit.message) ? (
+        <Alert
+          variant={isApiRateLimitError(generationError) ? "warning" : "destructive"}
+          title={
+            isApiRateLimitError(generationError)
+              ? "Aguarde para gerar outro Pix"
+              : "Não foi possível gerar o Pix"
+          }
+          aria-live="polite"
+        >
           <p>
-            {getErrorMessage(
-              generationError,
-              "Não foi possível gerar o Pix agora. Tente novamente."
-            )}
+            {generationRateLimit.message ??
+              getErrorMessage(
+                generationError,
+                "Não foi possível gerar o Pix agora. Tente novamente."
+              )}
           </p>
         </Alert>
       ) : null}

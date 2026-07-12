@@ -6,14 +6,19 @@ import {
   buildBackendUrl,
   copyBackendResponseHeaders,
   getOrCreateRequestId,
+  getProxyRequestBodyLimit,
   invalidOriginResponse,
+  invalidPayloadResponse,
   isRedirectStatus,
   isTrustedRequestOrigin,
+  readRequestBody,
+  RequestBodyTooLargeError,
+  requestBodyTooLargeResponse,
   unexpectedBackendRedirectResponse,
 } from "@/lib/server/backend";
 import {
+  clearSessionCookie,
   getSessionCookieName,
-  getSessionCookieOptions,
   type BackendSession,
 } from "@/lib/server/session";
 
@@ -134,10 +139,25 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
   const cookieName =
     rawSession === "public" ? null : getSessionCookieName(rawSession);
   const token = cookieName ? request.cookies.get(cookieName)?.value ?? null : null;
-  const requestBody =
-    request.method === "GET" || request.method === "HEAD"
-      ? undefined
-      : await request.arrayBuffer();
+  let requestBody: ArrayBuffer | undefined;
+  try {
+    const bodyLimit = getProxyRequestBodyLimit(pathname, request.method);
+    requestBody =
+      bodyLimit > 0 ? await readRequestBody(request, bodyLimit) : undefined;
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return requestBodyTooLargeResponse(requestId);
+    }
+
+    console.error("Falha ao ler o corpo encaminhado pelo BFF.", {
+      request_id: requestId,
+      session: rawSession,
+      method: request.method,
+      pathname,
+      error: error instanceof Error ? error.message : "unknown_error",
+    });
+    return invalidPayloadResponse(requestId);
+  }
 
   try {
     const backendResponse = await fetch(
@@ -174,12 +194,8 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
       ),
     });
 
-    if (backendResponse.status === 401 && cookieName) {
-      response.cookies.set(cookieName, "", {
-        ...getSessionCookieOptions(),
-        expires: new Date(0),
-        maxAge: 0,
-      });
+    if (backendResponse.status === 401 && rawSession !== "public") {
+      clearSessionCookie(response, rawSession);
     }
 
     console.info("BFF request completed.", {

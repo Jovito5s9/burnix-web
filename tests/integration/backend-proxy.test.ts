@@ -6,8 +6,12 @@ import {
   copyBackendResponseHeaders,
   getOrCreateRequestId,
   isRedirectStatus,
+  readRequestBody,
+  RequestBodyTooLargeError,
+  requestBodyTooLargeResponse,
   unexpectedBackendRedirectResponse,
 } from "@/lib/server/backend";
+import { getSessionMaxAgeSeconds } from "@/lib/server/session";
 
 describe("contrato do proxy BFF", () => {
   const originalApiUrl = process.env.API_URL;
@@ -71,4 +75,40 @@ describe("contrato do proxy BFF", () => {
       detail: { code: "unexpected_backend_redirect" },
     });
   });
+
+  it("rejeita corpos acima do limite antes de encaminhá-los", async () => {
+    const request = new NextRequest("http://localhost/api/backend/organizer/contracts", {
+      method: "POST",
+      body: "12345",
+      headers: { "content-type": "application/json" },
+    });
+
+    await expect(readRequestBody(request, 4)).rejects.toBeInstanceOf(
+      RequestBodyTooLargeError
+    );
+
+    const response = requestBodyTooLargeResponse("request-large");
+    expect(response.status).toBe(413);
+    expect(response.headers.get("x-request-id")).toBe("request-large");
+    await expect(response.json()).resolves.toMatchObject({
+      detail: { code: "request_body_too_large" },
+    });
+  });
+
+  it("alinha o maxAge do cookie ao menor prazo entre expires_in e JWT", () => {
+    const expiresAt = Math.floor(Date.now() / 1000) + 120;
+    const payload = Buffer.from(JSON.stringify({ exp: expiresAt })).toString(
+      "base64url"
+    );
+    const token = `header.${payload}.signature`;
+
+    expect(
+      getSessionMaxAgeSeconds({ access_token: token, expires_in: 45 })
+    ).toBe(45);
+
+    const jwtOnly = getSessionMaxAgeSeconds({ access_token: token });
+    expect(jwtOnly).toBeGreaterThanOrEqual(118);
+    expect(jwtOnly).toBeLessThanOrEqual(120);
+  });
+
 });

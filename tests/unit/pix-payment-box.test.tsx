@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { PixPaymentBox } from "@/components/public/pix-payment-box";
+import { ApiClientError } from "@/lib/get-error-message";
 import {
   buildRegistrationDetail,
   pendingPaymentFixture,
@@ -103,4 +104,31 @@ describe("PixPaymentBox", () => {
       screen.queryByRole("button", { name: /Gerar Pix|Gerar novo Pix/ })
     ).not.toBeInTheDocument();
   });
+  it("desabilita a geração de Pix durante o Retry-After", async () => {
+    render(
+      <PixPaymentBox
+        registration={buildRegistrationDetail({
+          payment_status: "pending",
+          latest_payment: null,
+        })}
+        generationError={
+          new ApiClientError("rate limit", {
+            status: 429,
+            retryAfterSeconds: 45,
+          })
+        }
+        onGeneratePix={vi.fn()}
+      />
+    );
+
+    expect(
+      await screen.findByText(
+        "Muitas tentativas foram realizadas. Aguarde 45 segundos e tente novamente."
+      )
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Tente novamente em 45s" })
+    ).toBeDisabled();
+  });
+
 });

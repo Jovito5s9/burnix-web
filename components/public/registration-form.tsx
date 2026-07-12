@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useParticipantAuth } from "@/hooks/useParticipantAuth";
+import { useRateLimitCountdown } from "@/hooks/useRateLimitCountdown";
 import {
   useCreateParticipantRegistration,
   useCreateParticipantRegistrationPix,
@@ -30,6 +31,7 @@ import {
   getApiFieldErrors,
   getErrorMessage,
   isApiNetworkError,
+  isApiRateLimitError,
   type ApiFieldErrors,
 } from "@/lib/get-error-message";
 import type { ContractFormField } from "@/types/form-field";
@@ -112,6 +114,7 @@ export function RegistrationForm({
   const router = useRouter();
   const pathname = usePathname();
   const { participant, isLoadingParticipant } = useParticipantAuth();
+  const registrationRateLimit = useRateLimitCountdown();
   const sortedFields = useMemo(
     () => [...fields].sort((a, b) => a.order - b.order || a.id - b.id),
     [fields]
@@ -229,6 +232,10 @@ export function RegistrationForm({
       }
 
       setPaymentError(error);
+
+      if (isApiRateLimitError(error)) {
+        return;
+      }
       setFeedback({
         variant: "warning",
         title: "Não foi possível gerar o Pix",
@@ -256,7 +263,7 @@ export function RegistrationForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (registrationSubmissionRef.current) return;
+    if (registrationSubmissionRef.current || registrationRateLimit.isRateLimited) return;
 
     registrationSubmissionRef.current = true;
     try {
@@ -303,6 +310,11 @@ export function RegistrationForm({
     } catch (error) {
       if (error instanceof ApiClientError && error.status === 401) {
         redirectToParticipantLogin();
+        return;
+      }
+
+      if (registrationRateLimit.startFromError(error)) {
+        setFeedback(null);
         return;
       }
 
@@ -420,6 +432,16 @@ export function RegistrationForm({
           Sua inscrição será vinculada ao E-mail <strong>{participant.email}</strong>.
         </p>
       </Alert>
+
+      {registrationRateLimit.message ? (
+        <Alert
+          variant="warning"
+          title="Aguarde para tentar novamente"
+          aria-live="polite"
+        >
+          <p>{registrationRateLimit.message}</p>
+        </Alert>
+      ) : null}
 
       {feedback ? (
         <Alert variant={feedback.variant} title={feedback.title}>
@@ -576,10 +598,16 @@ export function RegistrationForm({
             }}
           />
 
-          <Button className="w-full" type="submit" disabled={isPending}>
+          <Button
+            className="w-full"
+            type="submit"
+            disabled={isPending || registrationRateLimit.isRateLimited}
+          >
             {isPending
               ? "Enviando inscrição..."
-              : requiresPayment
+              : registrationRateLimit.isRateLimited
+                ? `Tente novamente em ${registrationRateLimit.secondsRemaining}s`
+                : requiresPayment
                 ? "Enviar inscrição e gerar Pix"
                 : "Confirmar inscrição gratuita"}
           </Button>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useParticipantAuth } from "@/hooks/useParticipantAuth";
+import { useRateLimitCountdown } from "@/hooks/useRateLimitCountdown";
 import { getErrorMessage } from "@/lib/get-error-message";
 import { getSafeNextPath } from "@/lib/safe-next-path";
 
@@ -15,6 +16,7 @@ export function ParticipantRegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { register, isRegistering } = useParticipantAuth();
+  const rateLimit = useRateLimitCountdown();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,6 +25,8 @@ export function ParticipantRegisterForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (rateLimit.isRateLimited) return;
+
     setError(null);
 
     if (password.length < 8 || password.length > 256) {
@@ -40,12 +44,26 @@ export function ParticipantRegisterForm() {
       router.replace(getSafeNextPath(searchParams.get("next"), "/"));
       router.refresh();
     } catch (registerError) {
-      setError(getErrorMessage(registerError, "Não foi possível criar a conta de participante."));
+      if (rateLimit.startFromError(registerError)) return;
+      setError(
+        getErrorMessage(
+          registerError,
+          "Não foi possível criar a conta de participante."
+        )
+      );
     }
   }
 
+  const isSubmitDisabled = isRegistering || rateLimit.isRateLimited;
+
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      {rateLimit.message ? (
+        <Alert variant="warning" title="Aguarde para tentar novamente" aria-live="polite">
+          {rateLimit.message}
+        </Alert>
+      ) : null}
+
       {error ? (
         <Alert variant="destructive" title="Falha no cadastro">
           {error}
@@ -97,8 +115,12 @@ export function ParticipantRegisterForm() {
         />
       </div>
 
-      <Button className="w-full" type="submit" disabled={isRegistering}>
-        {isRegistering ? "Criando conta..." : "Criar conta de participante"}
+      <Button className="w-full" type="submit" disabled={isSubmitDisabled}>
+        {isRegistering
+          ? "Criando conta..."
+          : rateLimit.isRateLimited
+            ? `Tente novamente em ${rateLimit.secondsRemaining}s`
+            : "Criar conta de participante"}
       </Button>
     </form>
   );

@@ -51,6 +51,7 @@ async function createMockBackend() {
       return sendJson(response, 200, {
         access_token: "participant-secret-token",
         token_type: "bearer",
+        expires_in: 3600,
         participant: {
           id: 12,
           email: "participante@example.com",
@@ -66,6 +67,7 @@ async function createMockBackend() {
       return sendJson(response, 201, {
         access_token: "participant-register-secret",
         token_type: "bearer",
+        expires_in: 3600,
         participant: {
           id: 13,
           email: "novo@example.com",
@@ -81,6 +83,7 @@ async function createMockBackend() {
       return sendJson(response, 200, {
         access_token: "organizer-secret-token",
         token_type: "bearer",
+        expires_in: 3600,
       });
     }
 
@@ -355,6 +358,7 @@ async function main() {
       env: {
         ...process.env,
         API_URL: `http://127.0.0.1:${backend.port}`,
+        APP_ORIGIN: origin,
         NODE_ENV: "production",
         NEXT_TELEMETRY_DISABLED: "1",
       },
@@ -384,6 +388,7 @@ async function main() {
     assert.match(participantSetCookie, /Secure/i);
     assert.match(participantSetCookie, /SameSite=Lax/i);
     assert.match(participantSetCookie, /Path=\//i);
+    assert.match(participantSetCookie, /Max-Age=3600/i);
     const participantCookie = cookiePair(participantSetCookie);
 
     const participantMe = await fetch(
@@ -522,6 +527,7 @@ async function main() {
     assert.equal(Object.hasOwn(organizerLoginBody, "access_token"), false);
     const organizerSetCookie = organizerLogin.headers.get("set-cookie");
     assert.match(organizerSetCookie, /burnix\.access_token=/);
+    assert.match(organizerSetCookie, /Max-Age=3600/i);
     assert.equal(organizerSetCookie.includes("burnix.participant_access_token"), false);
     const organizerCookie = cookiePair(organizerSetCookie);
 

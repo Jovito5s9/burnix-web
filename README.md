@@ -45,10 +45,19 @@ Variáveis principais:
 
 ```env
 API_URL=http://localhost:8000
-# APP_ORIGIN=https://app.seudominio.com
+APP_ORIGIN=http://localhost:3000
 ```
 
-`API_URL` é usada apenas no servidor pelo BFF. O navegador consome as rotas internas em `/api/backend/*` e não recebe o token JWT.
+`API_URL` é usada apenas no servidor pelo BFF. O navegador consome as rotas internas em `/api/backend/*` e não recebe o token JWT. Em produção, `API_URL` e `APP_ORIGIN` são obrigatórias e o build falha quando qualquer uma delas está ausente ou não é uma URL HTTP(S) absoluta. Não existe fallback de produção para variável `NEXT_PUBLIC_*`.
+
+Os limites de corpo do BFF podem ser ajustados por:
+
+```env
+BFF_AUTH_REQUEST_MAX_BODY_BYTES=16384
+BFF_REGISTRATION_REQUEST_MAX_BODY_BYTES=262144
+BFF_FORM_FIELD_REQUEST_MAX_BODY_BYTES=65536
+BFF_REQUEST_BODY_DEFAULT_MAX_BYTES=1048576
+```
 
 ## Desenvolvimento
 
@@ -116,6 +125,44 @@ Características principais:
 - `X-Request-ID` é propagado ao backend, devolvido ao navegador e incluído nos logs do BFF;
 - tokens não são enviados ao código cliente.
 
+
+## Rate limit
+
+Respostas `429` preservam o header `Retry-After` ao atravessar o BFF. Login, cadastro, inscrição e geração de Pix:
+
+- não repetem automaticamente a mutação enquanto o servidor solicita espera;
+- mantêm os valores digitados, inclusive senha;
+- desabilitam o botão durante a janela;
+- exibem uma contagem regressiva sem detalhes técnicos.
+
+O React Query repete somente erros de rede e os status `500`, `502`, `503` e `504`, com no máximo duas novas tentativas para consultas e uma para mutações. Status `4xx`, incluindo `429`, não são repetidos.
+
+## Segurança de produção
+
+O Next.js envia CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e, em produção, HSTS. A CSP permite apenas recursos locais, imagens `data:`/`blob:` usadas pelo QR Code e conexões para a própria origem.
+
+Cookies de organizador e participante são separados, `HttpOnly`, `Secure` em produção, `SameSite=Lax`, `Path=/` e possuem `Max-Age` alinhado a `expires_in` ou ao claim `exp` do JWT. Uma resposta `401` remove somente o cookie da sessão que realizou a chamada.
+
+Payloads são lidos em streaming e rejeitados com `413 request_body_too_large` antes de serem encaminhados quando excedem os limites configurados.
+
+## Container de produção
+
+O `Dockerfile` usa build multi-stage e a saída standalone do Next.js:
+
+```bash
+docker build \
+  --build-arg API_URL=http://backend:8000 \
+  --build-arg APP_ORIGIN=https://app.seudominio.com \
+  -t burnix-web .
+
+docker run --rm -p 3000:3000 \
+  -e API_URL=http://backend:8000 \
+  -e APP_ORIGIN=https://app.seudominio.com \
+  burnix-web
+```
+
+O container também valida as duas variáveis antes de iniciar o servidor.
+
 ## Validação
 
 Sequência equivalente ao CI:
@@ -129,12 +176,12 @@ npm run typecheck
 npm run lint
 npm run test
 npm run test:stage4
-npm run build
+API_URL=http://127.0.0.1:8000 APP_ORIGIN=https://app.example.com npm run build
 npm run test:bff
 npm run test:e2e
 ```
 
-`npm run test:bff` executa a aplicação com `next start` e valida sessões, URLs canônicas, coleções do organizador, propagação de request ID e tratamento de redirects.
+`npm run test:bff` executa a aplicação com `next start` e valida sessões separadas, cookies com `Max-Age`, URLs canônicas, coleções do organizador, propagação de request ID e tratamento de redirects.
 
 ## Estrutura técnica
 

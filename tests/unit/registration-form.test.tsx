@@ -196,4 +196,43 @@ describe("RegistrationForm", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("mantém os dados e desabilita a inscrição durante o Retry-After", async () => {
+    server.use(
+      http.get(participantMeUrl, () => HttpResponse.json(participantFixture)),
+      http.post(createRegistrationUrl, () =>
+        HttpResponse.json(
+          {
+            detail: {
+              code: "rate_limit_exceeded",
+              message: "Muitas tentativas.",
+              retry_after_seconds: 45,
+            },
+          },
+          { status: 429, headers: { "Retry-After": "45" } }
+        )
+      )
+    );
+
+    const { user } = renderWithQueryClient(
+      <RegistrationForm contractId={10} fields={[]} requiresPayment />
+    );
+
+    await screen.findByText("Conta de participante");
+    const name = screen.getByLabelText(/Nome completo/);
+    await user.type(name, "Participante preservado");
+    await user.click(
+      screen.getByRole("button", { name: "Enviar inscrição e gerar Pix" })
+    );
+
+    expect(
+      await screen.findByText(
+        "Muitas tentativas foram realizadas. Aguarde 45 segundos e tente novamente."
+      )
+    ).toBeVisible();
+    expect(name).toHaveValue("Participante preservado");
+    expect(
+      screen.getByRole("button", { name: "Tente novamente em 45s" })
+    ).toBeDisabled();
+  });
+
 });

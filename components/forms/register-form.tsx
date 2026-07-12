@@ -2,23 +2,25 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { useRateLimitCountdown } from "@/hooks/useRateLimitCountdown";
 import { getErrorMessage } from "@/lib/get-error-message";
 
 export function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { register, isRegistering } = useAuth();
+  const rateLimit = useRateLimitCountdown();
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
   const [error, setError] = useState<string | null>(null);
 
   function updateField(field: keyof typeof formData, value: string) {
@@ -27,6 +29,8 @@ export function RegisterForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (rateLimit.isRateLimited) return;
+
     setError(null);
 
     const email = formData.email.trim();
@@ -50,13 +54,24 @@ export function RegisterForm() {
       }
 
       router.push(`${loginUrl.pathname}${loginUrl.search}`);
-    } catch (err) {
-      setError(getErrorMessage(err, "Não foi possível criar a conta."));
+    } catch (registerError) {
+      if (rateLimit.startFromError(registerError)) return;
+      setError(
+        getErrorMessage(registerError, "Não foi possível criar a conta.")
+      );
     }
   }
 
+  const isSubmitDisabled = isRegistering || rateLimit.isRateLimited;
+
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      {rateLimit.message ? (
+        <Alert variant="warning" title="Aguarde para tentar novamente" aria-live="polite">
+          {rateLimit.message}
+        </Alert>
+      ) : null}
+
       {error ? (
         <Alert variant="destructive" title="Falha no cadastro">
           {error}
@@ -68,6 +83,7 @@ export function RegisterForm() {
         <Input
           id="email"
           type="email"
+          autoComplete="email"
           placeholder="voce@empresa.com"
           value={formData.email}
           onChange={(event) => updateField("email", event.target.value)}
@@ -80,6 +96,7 @@ export function RegisterForm() {
         <Input
           id="password"
           type="password"
+          autoComplete="new-password"
           placeholder="Crie uma senha com pelo menos 8 caracteres"
           value={formData.password}
           onChange={(event) => updateField("password", event.target.value)}
@@ -89,8 +106,12 @@ export function RegisterForm() {
         />
       </div>
 
-      <Button className="w-full" type="submit" disabled={isRegistering}>
-        {isRegistering ? "Criando conta..." : "Criar conta"}
+      <Button className="w-full" type="submit" disabled={isSubmitDisabled}>
+        {isRegistering
+          ? "Criando conta..."
+          : rateLimit.isRateLimited
+            ? `Tente novamente em ${rateLimit.secondsRemaining}s`
+            : "Criar conta"}
       </Button>
     </form>
   );

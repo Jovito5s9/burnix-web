@@ -12,6 +12,7 @@ export type ApiErrorDetailObject = {
   message?: unknown;
   errors?: ValidationErrorItem[];
   retryable?: unknown;
+  retry_after_seconds?: unknown;
   [key: string]: unknown;
 };
 
@@ -29,6 +30,7 @@ type ApiClientErrorOptions = {
   fieldErrors?: ApiFieldErrors;
   code?: string;
   retryable?: boolean;
+  retryAfterSeconds?: number;
   detail?: ApiErrorDetailObject | null;
 };
 
@@ -37,6 +39,7 @@ export class ApiClientError extends Error {
   fieldErrors: ApiFieldErrors;
   code?: string;
   retryable?: boolean;
+  retryAfterSeconds?: number;
   detail: ApiErrorDetailObject | null;
 
   constructor(message: string, options: ApiClientErrorOptions = {}) {
@@ -46,12 +49,15 @@ export class ApiClientError extends Error {
     this.fieldErrors = options.fieldErrors ?? {};
     this.code = options.code;
     this.retryable = options.retryable;
+    this.retryAfterSeconds = options.retryAfterSeconds;
     this.detail = options.detail ?? null;
   }
 }
 
 const FALLBACK_ERROR_MESSAGE =
   "Não foi possível concluir esta ação. Tente novamente em alguns instantes.";
+
+export const DEFAULT_RATE_LIMIT_RETRY_AFTER_SECONDS = 60;
 
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   event_not_found: "Evento não encontrado.",
@@ -112,6 +118,10 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   internal_error:
     "Ocorreu um erro inesperado. Tente novamente em alguns instantes.",
   backend_unavailable:
+    "O serviço está temporariamente indisponível. Tente novamente em alguns instantes.",
+  request_body_too_large:
+    "Os dados enviados excedem o tamanho permitido. Reduza o conteúdo e tente novamente.",
+  rate_limit_backend_unavailable:
     "O serviço está temporariamente indisponível. Tente novamente em alguns instantes.",
 };
 
@@ -310,6 +320,11 @@ export function getApiErrorDetail(error: unknown): ApiErrorDetailObject | null {
   return asDetailObject(getAxiosErrorDetail(error));
 }
 
+export function getApiErrorStatus(error: unknown): number | undefined {
+  if (error instanceof ApiClientError) return error.status;
+  return axios.isAxiosError(error) ? error.response?.status : undefined;
+}
+
 export function getApiErrorCode(error: unknown): string | undefined {
   if (error instanceof ApiClientError) return error.code;
 
@@ -322,6 +337,66 @@ export function getApiErrorRetryable(error: unknown): boolean | undefined {
 
   const detail = getApiErrorDetail(error);
   return typeof detail?.retryable === "boolean" ? detail.retryable : undefined;
+}
+
+
+function normalizeRetryAfterSeconds(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.max(1, Math.ceil(value));
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue) && numericValue > 0) {
+      return Math.max(1, Math.ceil(numericValue));
+    }
+
+    const retryDate = Date.parse(value);
+    if (Number.isFinite(retryDate)) {
+      return Math.max(1, Math.ceil((retryDate - Date.now()) / 1000));
+    }
+  }
+
+  return null;
+}
+
+function getAxiosRetryAfterHeader(error: unknown): unknown {
+  if (!axios.isAxiosError(error)) return null;
+
+  const headers = error.response?.headers;
+  if (!headers) return null;
+
+  if (typeof headers.get === "function") {
+    return headers.get("retry-after");
+  }
+
+  return (headers as Record<string, unknown>)["retry-after"];
+}
+
+export function getApiRetryAfterSeconds(error: unknown): number | null {
+  if (error instanceof ApiClientError) {
+    return (
+      normalizeRetryAfterSeconds(error.retryAfterSeconds) ??
+      normalizeRetryAfterSeconds(error.detail?.retry_after_seconds)
+    );
+  }
+
+  const headerValue = normalizeRetryAfterSeconds(getAxiosRetryAfterHeader(error));
+  if (headerValue) return headerValue;
+
+  return normalizeRetryAfterSeconds(
+    getApiErrorDetail(error)?.retry_after_seconds
+  );
+}
+
+export function isApiRateLimitError(error: unknown) {
+  return getApiErrorStatus(error) === 429;
+}
+
+export function formatRateLimitMessage(seconds: number) {
+  const safeSeconds = Math.max(1, Math.ceil(seconds));
+  const unit = safeSeconds === 1 ? "segundo" : "segundos";
+  return `Muitas tentativas foram realizadas. Aguarde ${safeSeconds} ${unit} e tente novamente.`;
 }
 
 export function isApiNetworkError(error: unknown): boolean {
@@ -338,6 +413,13 @@ export function getErrorMessage(
   error: unknown,
   fallback = FALLBACK_ERROR_MESSAGE
 ): string {
+  if (isApiRateLimitError(error)) {
+    return formatRateLimitMessage(
+      getApiRetryAfterSeconds(error) ??
+        DEFAULT_RATE_LIMIT_RETRY_AFTER_SECONDS
+    );
+  }
+
   const codeMessage = getCodeMessage(getApiErrorCode(error));
   if (codeMessage) return codeMessage;
 

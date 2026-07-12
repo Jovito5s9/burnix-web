@@ -6,6 +6,7 @@ import {
   getApiErrorDetail,
   getApiErrorRetryable,
   getApiFieldErrors,
+  getApiRetryAfterSeconds,
   getErrorMessage,
 } from "@/lib/get-error-message";
 
@@ -33,6 +34,7 @@ export function createApiClient(baseURL: string) {
           fieldErrors: getApiFieldErrors(error),
           code: getApiErrorCode(error),
           retryable: getApiErrorRetryable(error),
+          retryAfterSeconds: getApiRetryAfterSeconds(error) ?? undefined,
           detail: getApiErrorDetail(error),
         })
       );

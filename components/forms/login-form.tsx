@@ -2,17 +2,21 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { useRateLimitCountdown } from "@/hooks/useRateLimitCountdown";
 import { getErrorMessage } from "@/lib/get-error-message";
+import { getSafeNextPath } from "@/lib/safe-next-path";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isLoggingIn } = useAuth();
+  const rateLimit = useRateLimitCountdown();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,21 +26,32 @@ export function LoginForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (rateLimit.isRateLimited) return;
+
     setError(null);
 
     try {
       await login({ email: email.trim(), password });
-      router.push(searchParams.get("next") ?? "/dashboard");
-    } catch (err) {
-      setError(getErrorMessage(err, "Não foi possível entrar."));
+      router.push(getSafeNextPath(searchParams.get("next"), "/dashboard"));
+    } catch (loginError) {
+      if (rateLimit.startFromError(loginError)) return;
+      setError(getErrorMessage(loginError, "Não foi possível entrar."));
     }
   }
+
+  const isSubmitDisabled = isLoggingIn || rateLimit.isRateLimited;
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       {wasRegistered ? (
         <Alert variant="success" title="Conta criada com sucesso">
           Agora entre usando o E-mail e a senha cadastrados.
+        </Alert>
+      ) : null}
+
+      {rateLimit.message ? (
+        <Alert variant="warning" title="Aguarde para tentar novamente" aria-live="polite">
+          {rateLimit.message}
         </Alert>
       ) : null}
 
@@ -51,6 +66,7 @@ export function LoginForm() {
         <Input
           id="email"
           type="email"
+          autoComplete="email"
           placeholder="voce@empresa.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -63,6 +79,7 @@ export function LoginForm() {
         <Input
           id="password"
           type="password"
+          autoComplete="current-password"
           placeholder="********"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -70,8 +87,12 @@ export function LoginForm() {
         />
       </div>
 
-      <Button className="w-full" type="submit" disabled={isLoggingIn}>
-        {isLoggingIn ? "Entrando..." : "Entrar"}
+      <Button className="w-full" type="submit" disabled={isSubmitDisabled}>
+        {isLoggingIn
+          ? "Entrando..."
+          : rateLimit.isRateLimited
+            ? `Tente novamente em ${rateLimit.secondsRemaining}s`
+            : "Entrar"}
       </Button>
     </form>
   );

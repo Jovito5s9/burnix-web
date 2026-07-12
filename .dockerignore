@@ -1,0 +1,14 @@
+.git
+.gitignore
+.next
+node_modules
+coverage
+playwright-report
+test-results
+*.log
+.env*
+!.env.example
+!.env.production.example
+Dockerfile*
+README.md
+LICENSE.md
