@@ -27,6 +27,12 @@ export const publicEventFixture: PublicContract = {
   start_date: "2026-08-10",
   end_date: "2026-08-10",
   registration_deadline: "2026-08-05T23:59:59Z",
+  registration_open: true,
+  registration_state: "open",
+  registration_closed_reason: null,
+  registration_closed_message: null,
+  server_time: "2026-07-11T12:00:00Z",
+  remaining_capacity: 499,
   form_fields: [],
 };
 

@@ -22,6 +22,7 @@ import {
   getParticipantPaymentStatusLabel,
   getParticipantRegistrationStatusLabel,
 } from "@/lib/format";
+import { getRegistrationClosureFromApiCode, type RegistrationClosure } from "@/lib/event-availability";
 import {
   ApiClientError,
   getApiErrorCode,
@@ -43,6 +44,7 @@ type RegistrationFormProps = {
   contractId: string | number;
   fields: ContractFormField[];
   requiresPayment: boolean;
+  onRegistrationClosed?: (closure: RegistrationClosure) => void;
 };
 
 type Feedback = {
@@ -105,6 +107,7 @@ export function RegistrationForm({
   contractId,
   fields,
   requiresPayment,
+  onRegistrationClosed,
 }: RegistrationFormProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -300,6 +303,23 @@ export function RegistrationForm({
     } catch (error) {
       if (error instanceof ApiClientError && error.status === 401) {
         redirectToParticipantLogin();
+        return;
+      }
+
+      const closure = getRegistrationClosureFromApiCode(
+        getApiErrorCode(error),
+        getErrorMessage(error)
+      );
+      if (closure) {
+        createRegistration.reset();
+        setFeedback(null);
+        setFieldErrors({});
+        setPaymentResult(null);
+        setPaymentError(null);
+        setRecoveryError(null);
+        setRecoveryContext(null);
+        setRegistration(null);
+        onRegistrationClosed?.(closure);
         return;
       }
 

@@ -19,10 +19,12 @@ export type MockApiState = {
   registrationDetailSequence: ParticipantRegistrationDetail[];
   paymentResponses: ParticipantPaymentResponse[];
   duplicateOnCreate: boolean;
+  registrationCreateError: { code: string; message: string } | null;
   deniedRegistrationIds: Set<number>;
   registrationDelayMs: number;
   lastRegistrationPayload: Record<string, unknown> | null;
   counters: {
+    publicContractsRead: number;
     registrationsCreated: number;
     paymentsCreated: number;
     registrationDetailsRead: number;
@@ -49,6 +51,12 @@ const event: PublicContract = {
   start_date: "2026-08-10",
   end_date: "2026-08-10",
   registration_deadline: "2026-08-05T23:59:59Z",
+  registration_open: true,
+  registration_state: "open",
+  registration_closed_reason: null,
+  registration_closed_message: null,
+  server_time: "2026-07-11T12:00:00Z",
+  remaining_capacity: 499,
   form_fields: [],
 };
 
@@ -147,10 +155,12 @@ export function createMockApiState(
     registrationDetailSequence: [],
     paymentResponses: [publicPayment()],
     duplicateOnCreate: false,
+    registrationCreateError: null,
     deniedRegistrationIds: new Set<number>(),
     registrationDelayMs: 0,
     lastRegistrationPayload: null,
     counters: {
+      publicContractsRead: 0,
       registrationsCreated: 0,
       paymentsCreated: 0,
       registrationDetailsRead: 0,
@@ -247,6 +257,8 @@ export async function installMockApi(page: Page, state: MockApiState) {
       method === "GET" &&
       /^\/api\/backend\/public\/public\/contracts\/\d+$/.test(pathname)
     ) {
+      state.counters.publicContractsRead += 1;
+
       if (state.publicEventError) {
         return json(
           route,
@@ -318,6 +330,14 @@ export async function installMockApi(page: Page, state: MockApiState) {
       if (state.registrationDelayMs > 0) {
         await new Promise((resolve) =>
           setTimeout(resolve, state.registrationDelayMs)
+        );
+      }
+
+      if (state.registrationCreateError) {
+        return json(
+          route,
+          { detail: state.registrationCreateError },
+          409
         );
       }
 

@@ -6,6 +6,10 @@ import type {
 } from "@/types/participant-registration";
 import type { PublicContract } from "@/types/public-contract";
 
+export function publicContractQueryKey(contractId: string | number) {
+  return ["public-contracts", contractId] as const;
+}
+
 export async function getPublicContract(contractId: string | number) {
   const { data } = await publicApi.get<PublicContract>(
     `/public/contracts/${contractId}`

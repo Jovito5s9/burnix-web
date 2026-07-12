@@ -1,5 +1,5 @@
 import { http, HttpResponse, delay } from "msw";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 
 import { RegistrationForm } from "@/components/public/registration-form";
@@ -152,4 +152,48 @@ describe("RegistrationForm", () => {
     expect(registrationRequests).toBe(1);
     expect(paymentRequests).toBe(0);
   });
+  it("transforma o 409 de prazo encerrado em bloqueio do formulário", async () => {
+    const onRegistrationClosed = vi.fn();
+
+    server.use(
+      http.get(participantMeUrl, () => HttpResponse.json(participantFixture)),
+      http.post(createRegistrationUrl, () =>
+        HttpResponse.json(
+          {
+            detail: {
+              code: "event_registration_closed",
+              message: "As inscrições para este evento estão encerradas.",
+            },
+          },
+          { status: 409 }
+        )
+      )
+    );
+
+    const { user } = renderWithQueryClient(
+      <RegistrationForm
+        contractId={10}
+        fields={[]}
+        requiresPayment
+        onRegistrationClosed={onRegistrationClosed}
+      />
+    );
+
+    await screen.findByText("Conta de participante");
+    await user.type(screen.getByLabelText(/Nome completo/), "Participante A");
+    await user.click(
+      screen.getByRole("button", { name: "Enviar inscrição e gerar Pix" })
+    );
+
+    await waitFor(() => {
+      expect(onRegistrationClosed).toHaveBeenCalledWith({
+        reason: "deadline_passed",
+        message: "As inscrições para este evento estão encerradas.",
+      });
+    });
+    expect(
+      screen.queryByText("Não foi possível concluir a inscrição")
+    ).not.toBeInTheDocument();
+  });
+
 });

@@ -79,6 +79,24 @@ POST /contracts/{id}/reopen
 
 Quando o evento possui inscrições ou pagamentos, preço e moeda são bloqueados na interface. O backend continua sendo a autoridade final para essa regra.
 
+## Disponibilidade pública de inscrições
+
+A página pública usa a disponibilidade calculada pelo backend:
+
+```text
+registration_open
+registration_state
+registration_closed_message
+server_time
+remaining_capacity
+```
+
+O formulário é montado somente quando `registration_open=true`. Estados como prazo encerrado, capacidade atingida, evento encerrado ou cancelado exibem uma mensagem específica e mantêm o acesso a **Minhas inscrições** para participantes que já concluíram o cadastro.
+
+O prazo é acompanhado por `hooks/useEventAvailabilityTimer.ts`. O hook calcula a diferença entre `server_time` e o relógio do navegador, fecha a interface no instante correto e solicita uma nova leitura do evento. O backend permanece como autoridade final: um `409 event_registration_closed` ou `409 event_capacity_reached` durante o envio substitui o formulário pelo estado de encerramento, sem apresentar erro técnico genérico.
+
+A implementação e o contrato de interface estão documentados em `docs/public-registration-availability.md`.
+
 ## BFF e sessões
 
 O BFF separa três contextos:

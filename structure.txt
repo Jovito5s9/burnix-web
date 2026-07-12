@@ -79,6 +79,7 @@
 ./components/public/dynamic-registration-fields.tsx
 ./components/public/pix-payment-box.tsx
 ./components/public/public-event-page.tsx
+./components/public/registration-closed-state.tsx
 ./components/public/registration-form.tsx
 ./components/ui/alert.tsx
 ./components/ui/badge.tsx
@@ -95,6 +96,7 @@
 ./docs/frontend-stage-4-openpix-participant-flow.md
 ./docs/frontend-stage-5-tests.md
 ./docs/frontend-stage-6-production-copy.md
+./docs/public-registration-availability.md
 ./docs/validation-runtime-bff-events.md
 ./docs/validation-stage-1.md
 ./docs/validation-stage-2.md
@@ -109,6 +111,7 @@
 ./hooks/useCheckout.ts
 ./hooks/useClients.ts
 ./hooks/useContracts.ts
+./hooks/useEventAvailabilityTimer.ts
 ./hooks/useFormFields.ts
 ./hooks/useParticipantAuth.ts
 ./hooks/useParticipantPaymentPolling.ts
@@ -120,6 +123,7 @@
 ./lib/checkout.ts
 ./lib/constants.ts
 ./lib/datetime.ts
+./lib/event-availability.ts
 ./lib/format.ts
 ./lib/get-error-message.ts
 ./lib/participant-registration-query.ts
@@ -163,6 +167,7 @@
 ./tests/e2e/duplicate-registration.spec.ts
 ./tests/e2e/participant-registration.spec.ts
 ./tests/e2e/payment-confirmation.spec.ts
+./tests/e2e/registration-availability.spec.ts
 ./tests/e2e/support/mock-api.ts
 ./tests/fixtures/participant.ts
 ./tests/integration/backend-proxy.test.ts
@@ -171,10 +176,13 @@
 ./tests/setup/render.tsx
 ./tests/setup/vitest.setup.ts
 ./tests/unit/contracts-service.test.ts
+./tests/unit/event-availability-timer.test.tsx
+./tests/unit/event-availability.test.ts
 ./tests/unit/event-form.test.tsx
 ./tests/unit/my-registrations-page.test.tsx
 ./tests/unit/pix-payment-box.test.tsx
 ./tests/unit/production-copy.test.ts
+./tests/unit/public-event-page.test.tsx
 ./tests/unit/registration-form.test.tsx
 ./tsconfig.json
 ./types/admin.ts
