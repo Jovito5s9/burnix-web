@@ -32,11 +32,11 @@ export default async function ParticipantLoginPage({
           <CardHeader>
             <CardTitle>Entrar como participante</CardTitle>
             <CardDescription>
-              Use sua conta pessoal para realizar inscrições e acessar seus próprios eventos.
+              Use sua conta de participante para fazer inscrições e acompanhar os eventos em que você se inscreveu.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Suspense fallback={<Spinner label="Carregando autenticação..." />}>
+            <Suspense fallback={<Spinner label="Carregando..." />}>
               <ParticipantLoginForm />
             </Suspense>
 

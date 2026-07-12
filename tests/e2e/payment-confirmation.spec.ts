@@ -10,7 +10,7 @@ import {
   setParticipantSession,
 } from "./support/mock-api";
 
-test("pagamento confirmado pelo backend atualiza a tela", async ({ page }) => {
+test("pagamento confirmado atualiza a tela", async ({ page }) => {
   const pending = registrationDetail({
     latest_payment: pendingPayment(),
   });
@@ -58,7 +58,7 @@ test("pagamento expirado oferece e conclui uma nova tentativa", async ({ page })
     attempt_number: 2,
     checkout_url: "https://checkout.example/pix/88",
     qr_code_base64: "bm92by1xci1jb2Rl",
-    copy_and_paste: "nova-cobranca-pix",
+    copy_and_paste: "novo-pix-copia-e-cola",
     expires_at: "2026-07-11T19:00:00Z",
   });
   const state = createMockApiState({
@@ -74,12 +74,12 @@ test("pagamento expirado oferece e conclui uma nova tentativa", async ({ page })
 
   await expect(
     page
-      .getByText("Este Pix expirou. Gere uma nova cobrança", { exact: true })
+      .getByText("Este Pix expirou", { exact: true })
       .last()
   ).toBeVisible();
-  await page.getByRole("button", { name: "Gerar nova cobrança" }).click();
+  await page.getByRole("button", { name: "Gerar novo Pix" }).click();
 
-  await expect(page.getByText("nova-cobranca-pix")).toBeVisible();
+  await expect(page.getByText("novo-pix-copia-e-cola")).toBeVisible();
   await expect(
     page.getByRole("img", { name: "QR Code para pagamento Pix" })
   ).toBeVisible();

@@ -17,9 +17,11 @@ type AdminEventsTableProps = {
 };
 
 function PaginationFooter({ total, skip, limit, hasMore, isFetching, onPrevious, onNext }: Omit<AdminEventsTableProps, "events">) {
+  const page = Math.floor(skip / limit) + 1;
+
   return (
     <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 pt-4 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
-      <p>Página por `skip={skip}` e `limit={limit}`{total !== null ? ` · Total: ${total}` : ""}.</p>
+      <p>Página {page}{total !== null ? ` · ${total} eventos` : ""}</p>
       <div className="flex gap-2">
         <Button variant="secondary" size="sm" disabled={skip === 0 || isFetching} onClick={onPrevious}>Anterior</Button>
         <Button variant="secondary" size="sm" disabled={!hasMore || isFetching} onClick={onNext}>Próxima</Button>
@@ -34,7 +36,7 @@ export function AdminEventsTable(props: AdminEventsTableProps) {
   if (events.length === 0) {
     return (
       <div>
-        <EmptyState title="Nenhum evento encontrado" description="A rota /admin/contracts não retornou registros para esta página." />
+        <EmptyState title="Nenhum evento encontrado" description="Não há eventos para exibir nesta página." />
         <PaginationFooter {...props} />
       </div>
     );
@@ -47,9 +49,9 @@ export function AdminEventsTable(props: AdminEventsTableProps) {
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">ID</th>
                 <th className="px-4 py-3">Evento</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Nome</th>
+                <th className="px-4 py-3">Situação</th>
                 <th className="px-4 py-3">Preço</th>
                 <th className="px-4 py-3">Capacidade</th>
                 <th className="px-4 py-3">Criado em</th>
@@ -59,7 +61,7 @@ export function AdminEventsTable(props: AdminEventsTableProps) {
             <tbody className="divide-y divide-slate-200 bg-white">
               {events.map((event) => (
                 <tr key={event.id}>
-                  <td className="px-4 py-3 font-medium text-slate-950">{event.id}</td>
+                  <td className="px-4 py-3 font-medium text-slate-950">#{event.id}</td>
                   <td className="px-4 py-3 text-slate-700">{event.title}</td>
                   <td className="px-4 py-3"><StatusBadge kind="contract" status={event.status} /></td>
                   <td className="px-4 py-3 text-slate-700">{formatCurrency(Number(event.price), event.currency)}</td>

@@ -77,7 +77,7 @@ export function PaymentStatusPanel({
         setSuccessMessage(
           result.status === "paid"
             ? "Pagamento confirmado."
-            : "Cobrança Pix disponível. A confirmação será atualizada automaticamente."
+            : "Pix disponível. A confirmação será atualizada automaticamente."
         );
       } else {
         setSuccessMessage("Este evento é gratuito.");
@@ -109,7 +109,7 @@ export function PaymentStatusPanel({
           <div>
             <CardTitle>Pagamento</CardTitle>
             <CardDescription>
-              O status é consultado automaticamente enquanto a cobrança está pendente.
+              A confirmação é consultada automaticamente enquanto o pagamento está pendente.
             </CardDescription>
           </div>
           <Badge
@@ -143,19 +143,19 @@ export function PaymentStatusPanel({
 
         {paymentStatus === "pending" ? (
           <Alert variant="info" title="Aguardando pagamento">
-            <p>Use o QR Code ou o código Pix para concluir.</p>
+            <p>Aguardando a confirmação do pagamento. Você pode manter esta página aberta.</p>
           </Alert>
         ) : null}
 
         {paymentStatus === "expired" ? (
-          <Alert variant="warning" title="Este Pix expirou. Gere uma nova cobrança">
-            <p>Sua inscrição foi preservada e pode receber uma nova tentativa.</p>
+          <Alert variant="warning" title="Este Pix expirou">
+            <p>Sua inscrição continua salva. Gere um novo Pix para concluir o pagamento.</p>
           </Alert>
         ) : null}
 
         {paymentStatus === "error" ? (
           <Alert variant="warning" title="Não foi possível gerar o Pix">
-            <p>Sua inscrição foi preservada. Tente gerar uma nova cobrança.</p>
+            <p>Sua inscrição continua salva. Tente gerar um novo Pix.</p>
           </Alert>
         ) : null}
 
@@ -173,14 +173,8 @@ export function PaymentStatusPanel({
                 {formatCurrency(Number(payment.amount), payment.currency)}
               </p>
             </div>
-            <div>
-              <p className="text-slate-500">Tentativa</p>
-              <p className="font-semibold text-slate-950">
-                {payment.attempt_number}
-              </p>
-            </div>
             {payment.expires_at ? (
-              <div className="sm:col-span-2">
+              <div>
                 <p className="text-slate-500">Expira em</p>
                 <p className="font-semibold text-slate-950">
                   {formatDate(payment.expires_at)}
@@ -231,7 +225,7 @@ export function PaymentStatusPanel({
             {generatePix.isPending
               ? "Gerando Pix..."
               : paymentStatus === "expired"
-                ? "Gerar nova cobrança"
+                ? "Gerar novo Pix"
                 : paymentStatus === "error"
                   ? "Tentar novamente"
                   : "Gerar Pix"}
@@ -259,7 +253,7 @@ export function PaymentStatusPanel({
           <p className="text-xs text-slate-500" aria-live="polite">
             {isRefreshingStatus
               ? "Atualizando a confirmação do pagamento..."
-              : "A confirmação será atualizada automaticamente."}
+              : "Aguardando a confirmação do pagamento. Você pode manter esta página aberta."}
           </p>
         ) : null}
       </CardContent>

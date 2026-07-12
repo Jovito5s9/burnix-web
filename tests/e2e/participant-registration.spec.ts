@@ -28,7 +28,7 @@ test("visitante cria conta, retorna ao evento, cria inscrição e recebe o Pix",
   await page.getByRole("button", { name: "Criar conta de participante" }).click();
 
   await expect(page).toHaveURL(/\/eventos\/10$/);
-  await expect(page.getByText("Participante autenticado")).toBeVisible();
+  await expect(page.getByText("Conta de participante", { exact: true })).toBeVisible();
 
   await page.getByLabel(/Nome completo/).fill("Novo Participante");
   await page

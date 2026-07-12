@@ -24,7 +24,6 @@ import type {
 type PaymentView = Pick<
   ParticipantRegistrationPayment,
   | "id"
-  | "attempt_number"
   | "status"
   | "amount"
   | "currency"
@@ -148,52 +147,46 @@ export function PixPaymentBox({
 
       {paymentStatus === "pending" && payment ? (
         <Alert variant="info" title="Aguardando pagamento">
-          <p>Use o QR Code ou o código Pix abaixo para concluir.</p>
+          <p>Aguardando a confirmação do pagamento. Você pode manter esta página aberta.</p>
         </Alert>
       ) : null}
 
       {paymentStatus === "pending" && !payment ? (
         <Alert variant="warning" title="Aguardando pagamento">
-          <p>Sua inscrição foi salva. Gere a cobrança Pix para continuar.</p>
+          <p>Sua inscrição foi salva. Gere o Pix para continuar.</p>
         </Alert>
       ) : null}
 
       {paymentStatus === "expired" ? (
-        <Alert variant="warning" title="Este Pix expirou. Gere uma nova cobrança">
-          <p>Sua inscrição foi preservada e pode receber uma nova tentativa.</p>
+        <Alert variant="warning" title="Este Pix expirou">
+          <p>Sua inscrição continua salva. Gere um novo Pix para concluir o pagamento.</p>
         </Alert>
       ) : null}
 
       {paymentStatus === "error" ? (
         <Alert variant="warning" title="Não foi possível gerar o Pix">
-          <p>Sua inscrição foi preservada. Tente gerar uma nova cobrança.</p>
+          <p>Sua inscrição continua salva. Tente gerar um novo Pix.</p>
         </Alert>
       ) : null}
 
       {paymentStatus === "refunded" ? (
         <Alert variant="warning" title="Pagamento estornado">
-          <p>Não é possível gerar uma nova cobrança por esta tela.</p>
+          <p>Este pagamento foi devolvido. Consulte sua inscrição para mais informações.</p>
         </Alert>
       ) : null}
 
       {registration.registration_status === "cancelled" ? (
         <Alert variant="warning" title="Inscrição cancelada">
-          <p>Esta inscrição não aceita novas tentativas de pagamento.</p>
+          <p>Não é possível realizar um novo pagamento para esta inscrição.</p>
         </Alert>
       ) : null}
 
       {payment ? (
-        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm sm:grid-cols-3">
+        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm sm:grid-cols-2">
           <div>
             <p className="text-slate-500">Valor</p>
             <p className="font-semibold text-slate-950">
               {formatCurrency(Number(payment.amount), payment.currency)}
-            </p>
-          </div>
-          <div>
-            <p className="text-slate-500">Tentativa</p>
-            <p className="font-semibold text-slate-950">
-              {payment.attempt_number}
             </p>
           </div>
           {payment.expires_at ? (
@@ -245,8 +238,8 @@ export function PixPaymentBox({
 
       {!canResumePayment &&
       (paymentStatus === "expired" || paymentStatus === "error") ? (
-        <Alert variant="warning" title="Pagamento não pode ser retomado">
-          <p>Consulte Minhas inscrições para acompanhar o status.</p>
+        <Alert variant="warning" title="Novo pagamento indisponível">
+          <p>Consulte Minhas inscrições para acompanhar a situação da inscrição.</p>
         </Alert>
       ) : null}
 
@@ -255,7 +248,7 @@ export function PixPaymentBox({
           {isGenerating
             ? "Gerando Pix..."
             : paymentStatus === "expired"
-              ? "Gerar nova cobrança"
+              ? "Gerar novo Pix"
               : paymentStatus === "error"
                 ? "Tentar novamente"
                 : "Gerar Pix"}
@@ -277,7 +270,7 @@ export function PixPaymentBox({
         <p className="text-xs leading-5 text-slate-500" aria-live="polite">
           {isRefreshingStatus
             ? "Atualizando a confirmação do pagamento..."
-            : "A confirmação será atualizada automaticamente."}
+            : "Aguardando a confirmação do pagamento. Você pode manter esta página aberta."}
         </p>
       ) : null}
     </div>

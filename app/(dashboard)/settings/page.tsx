@@ -17,15 +17,15 @@ export default function SettingsPage() {
             Configurações
           </h1>
           <p className="mt-2 max-w-2xl text-slate-600">
-            Gerencie dados operacionais da conta e o perfil de cobrança usado pelo backend Burnix.
+            Atualize os dados da sua conta e as informações usadas para receber pagamentos.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Perfil de cobrança</CardTitle>
+            <CardTitle>Dados de recebimento</CardTitle>
             <CardDescription>
-              Dados Pix do organizador consumidos pelas rotas `/billing-profiles/me`.
+              Cadastre a chave Pix e os dados do responsável pelo recebimento.
             </CardDescription>
           </CardHeader>
           <CardContent>

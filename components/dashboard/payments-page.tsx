@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/feedback/status-badge";
 import { useContracts } from "@/hooks/useContracts";
 import { usePayments } from "@/hooks/usePayments";
 import { formatCurrency, formatDate, getReadableMethod } from "@/lib/format";
+import { getErrorMessage } from "@/lib/get-error-message";
 
 function truncatePixCode(value: string) {
   return value.length > 96 ? `${value.slice(0, 96)}...` : value;
@@ -35,10 +36,10 @@ export function PaymentsPage() {
   }
 
   if (paymentsQuery.error || contractsQuery.error) {
-    const message =
-      paymentsQuery.error?.message ??
-      contractsQuery.error?.message ??
-      "Não foi possível carregar os pagamentos.";
+    const message = getErrorMessage(
+      paymentsQuery.error ?? contractsQuery.error,
+      "Não foi possível carregar os pagamentos."
+    );
 
     return (
       <Alert variant="destructive" title="Erro ao carregar pagamentos">
@@ -63,10 +64,10 @@ export function PaymentsPage() {
           <Badge>Pagamentos</Badge>
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Histórico de pagamentos Pix/OpenPix
+              Histórico de pagamentos
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Acompanhe pagador, provider, status, taxas, valor líquido e dados de cobrança retornados pelo backend.
+              Consulte valores, participantes, taxas e o andamento de cada pagamento.
             </p>
           </div>
         </div>
@@ -82,7 +83,7 @@ export function PaymentsPage() {
                 <Link href="/contracts">Ver eventos</Link>
               </Button>
               <Button asChild variant="secondary" size="sm">
-                <Link href="/dashboard">Ir ao dashboard</Link>
+                <Link href="/dashboard">Ir para a visão geral</Link>
               </Button>
             </div>
           </CardHeader>
@@ -90,7 +91,7 @@ export function PaymentsPage() {
             {paymentsQuery.payments.length === 0 ? (
               <EmptyState
                 title="Nenhum pagamento encontrado"
-                description="Assim que o backend devolver cobranças Pix/OpenPix, elas aparecerão aqui."
+                description="Os pagamentos aparecerão aqui assim que forem gerados."
                 action={
                   <Button variant="secondary" asChild>
                     <Link href="/contracts">Ir para eventos</Link>
@@ -130,7 +131,7 @@ export function PaymentsPage() {
                               </span>
                             </p>
                             <p>
-                              Pagador:{" "}
+                              Participante:{" "}
                               <span className="font-medium text-slate-950">
                                 {payment.payer_name ?? "—"}
                               </span>
@@ -148,7 +149,7 @@ export function PaymentsPage() {
                               </span>
                             </p>
                             <p>
-                              Inscrição/cliente:{" "}
+                              Inscrição:{" "}
                               <span className="font-medium text-slate-950">
                                 {payment.client_id ?? "—"}
                               </span>
@@ -169,21 +170,9 @@ export function PaymentsPage() {
 
                         <div className="grid gap-2 text-sm text-slate-600 xl:min-w-72 xl:text-right">
                           <p>
-                            Provider:{" "}
-                            <span className="font-medium text-slate-950">
-                              {payment.provider || "—"}
-                            </span>
-                          </p>
-                          <p>
-                            Método:{" "}
+                            Forma de pagamento:{" "}
                             <span className="font-medium text-slate-950">
                               {getReadableMethod(payment.payment_method ?? payment.method)}
-                            </span>
-                          </p>
-                          <p>
-                            Detalhe do status:{" "}
-                            <span className="font-medium text-slate-950">
-                              {payment.status_detail ?? "—"}
                             </span>
                           </p>
                           <p>
@@ -208,7 +197,7 @@ export function PaymentsPage() {
                             {payment.checkout_url ? (
                               <Button asChild variant="secondary" size="sm">
                                 <a href={payment.checkout_url} target="_blank" rel="noreferrer">
-                                  Abrir link Pix/OpenPix
+                                  Abrir pagamento
                                 </a>
                               </Button>
                             ) : null}

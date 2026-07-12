@@ -19,6 +19,7 @@ import { useClients } from "@/hooks/useClients";
 import { useContracts } from "@/hooks/useContracts";
 import { usePayments } from "@/hooks/usePayments";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { getErrorMessage } from "@/lib/get-error-message";
 
 export function DashboardOverview() {
   const contractsQuery = useContracts({ skip: 0, limit: 50 });
@@ -40,14 +41,13 @@ export function DashboardOverview() {
   }
 
   if (contractsQuery.error || paymentsQuery.error || clientsQuery.error) {
-    const message =
-      contractsQuery.error?.message ??
-      paymentsQuery.error?.message ??
-      clientsQuery.error?.message ??
-      "Não foi possível carregar o dashboard.";
+    const message = getErrorMessage(
+      contractsQuery.error ?? paymentsQuery.error ?? clientsQuery.error,
+      "Não foi possível carregar a visão geral."
+    );
 
     return (
-      <Alert variant="destructive" title="Erro ao carregar o dashboard">
+      <Alert variant="destructive" title="Não foi possível carregar a visão geral">
         <div className="space-y-3">
           <p>{message}</p>
           <Button asChild variant="secondary">
@@ -85,7 +85,7 @@ export function DashboardOverview() {
         active: "Ativo",
         suspended: "Suspenso",
         cancelled: "Cancelado",
-      }[billingProfile.billing_status] ?? billingProfile.billing_status
+      }[billingProfile.billing_status] ?? "Indisponível"
     : billingProfileQuery.error
       ? "Indisponível"
       : "Não criado";
@@ -97,11 +97,11 @@ export function DashboardOverview() {
     <section className="py-8">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-3">
-          <Badge>Dashboard</Badge>
+          <Badge>Painel do organizador</Badge>
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Visão geral</h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Acompanhe eventos, inscrições, participantes e pagamentos Pix/OpenPix processados pelo backend Burnix.
+              Acompanhe seus eventos, inscrições, participantes e pagamentos em um só lugar.
             </p>
           </div>
         </div>
@@ -123,7 +123,7 @@ export function DashboardOverview() {
               <CardTitle>{totalRegistrations}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              Participantes/clients retornados por `/clients/`.
+              Total de participantes inscritos nos seus eventos.
             </CardContent>
           </Card>
 
@@ -143,22 +143,22 @@ export function DashboardOverview() {
               <CardTitle>{formatCurrency(totalRevenue)}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
-              {paidPayments} pagamentos pagos e {pendingPayments} pendentes.
+              {paidPayments} pagamentos confirmados e {pendingPayments} aguardando confirmação.
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardDescription>Perfil de cobrança</CardDescription>
+              <CardDescription>Dados de recebimento</CardDescription>
               <CardTitle>{billingStatusLabel}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-slate-600">
               {billingProfile ? (
                 <>Chave Pix {billingProfile.pix_key ? "configurada" : "não informada"}.</>
               ) : billingProfileQuery.error ? (
-                <>Não foi possível consultar `/billing-profiles/me`.</>
+                <>Não foi possível consultar os dados de recebimento.</>
               ) : (
-                <>Crie o perfil em configurações para cadastrar a chave Pix.</>
+                <>Cadastre sua chave Pix nas configurações para receber pagamentos.</>
               )}
             </CardContent>
           </Card>
@@ -214,7 +214,7 @@ export function DashboardOverview() {
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div>
                 <CardTitle>Pagamentos recentes</CardTitle>
-                <CardDescription>Últimas transações Pix/OpenPix recebidas pelo backend.</CardDescription>
+                <CardDescription>Últimos pagamentos registrados nos seus eventos.</CardDescription>
               </div>
               <Button asChild variant="secondary" size="sm">
                 <Link href="/payments">Ver pagamentos</Link>
@@ -224,7 +224,7 @@ export function DashboardOverview() {
               {recentPayments.length === 0 ? (
                 <EmptyState
                   title="Nenhum pagamento encontrado"
-                  description="As cobranças Pix/OpenPix aparecerão aqui depois de geradas."
+                  description="Os pagamentos aparecerão aqui assim que forem gerados."
                 />
               ) : (
                 <div className="space-y-3">
@@ -240,7 +240,7 @@ export function DashboardOverview() {
                             {formatCurrency(Number(payment.amount), payment.currency)}
                           </p>
                           <p className="mt-1 text-sm text-slate-500">
-                            {payment.payer_name ?? payment.payer_email ?? "Pagador não informado"}
+                            {payment.payer_name ?? payment.payer_email ?? "Participante não informado"}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
                             Criado em {formatDate(payment.created_at)}

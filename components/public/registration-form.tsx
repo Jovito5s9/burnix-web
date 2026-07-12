@@ -216,7 +216,7 @@ export function RegistrationForm({
         setFeedback({
           variant: "info",
           title: "Aguardando pagamento",
-          message: "Use o QR Code ou o código Pix abaixo para concluir.",
+          message: "Use o QR Code ou o código Pix abaixo para concluir o pagamento.",
         });
       }
     } catch (error) {
@@ -230,7 +230,7 @@ export function RegistrationForm({
         variant: "warning",
         title: "Não foi possível gerar o Pix",
         message:
-          "Sua inscrição foi preservada. Não envie o formulário novamente; gere uma nova cobrança abaixo.",
+          "Sua inscrição continua salva. Tente gerar um novo Pix abaixo.",
       });
 
       const context = recoveryContext ?? {
@@ -314,7 +314,7 @@ export function RegistrationForm({
           variant: "warning",
           title: "Você já está inscrito neste evento",
           message:
-            "Encontramos sua inscrição existente e estamos recuperando o pagamento atual.",
+            "Encontramos sua inscrição e estamos carregando as informações de pagamento.",
         });
         await loadExistingRegistration(context);
         return;
@@ -356,7 +356,7 @@ export function RegistrationForm({
     setFeedback({
       variant: "info",
       title: "Inscrição criada",
-      message: "Sua inscrição foi salva. Estamos gerando a cobrança Pix.",
+      message: "Sua inscrição foi salva. Estamos preparando o pagamento por Pix.",
     });
     await generatePixForRegistration(createdRegistration.id);
   }
@@ -364,7 +364,7 @@ export function RegistrationForm({
   if (isLoadingParticipant) {
     return (
       <div className="flex min-h-40 items-center justify-center">
-        <Spinner label="Verificando sua sessão de participante..." />
+        <Spinner label="Verificando sua conta de participante..." />
       </div>
     );
   }
@@ -374,15 +374,14 @@ export function RegistrationForm({
       <div className="space-y-4">
         <Alert variant="info" title="Entre para se inscrever">
           <p>
-            O evento continua público, mas a inscrição precisa estar vinculada à
-            sua conta de participante.
+            Entre com sua conta de participante para continuar a inscrição.
           </p>
         </Alert>
         <Button className="w-full" onClick={redirectToParticipantLogin}>
           Inscrever-se
         </Button>
         <p className="text-center text-xs text-slate-500">
-          Sua sessão de participante é separada da sessão do organizador.
+          Ainda não tem uma conta? Você poderá criar uma na próxima etapa.
         </p>
       </div>
     );
@@ -396,10 +395,9 @@ export function RegistrationForm({
 
   return (
     <div className="space-y-6">
-      <Alert variant="info" title="Participante autenticado">
+      <Alert variant="info" title="Conta de participante">
         <p>
-          A inscrição será vinculada a <strong>{participant.email}</strong>. O
-          e-mail e a identidade não são enviados pelo formulário.
+          Sua inscrição será vinculada ao E-mail <strong>{participant.email}</strong>.
         </p>
       </Alert>
 
@@ -412,11 +410,9 @@ export function RegistrationForm({
       {currentRegistration ? (
         <Alert variant="info" title="Inscrição localizada">
           <p>
-            Inscrição #{currentRegistration.id} · {" "}
-            {getParticipantRegistrationStatusLabel(
+            Inscrição #{currentRegistration.id}: {getParticipantRegistrationStatusLabel(
               currentRegistration.registration_status
-            )} · Pagamento {" "}
-            {getParticipantPaymentStatusLabel(currentRegistration.payment_status)}.
+            )}. Pagamento: {getParticipantPaymentStatusLabel(currentRegistration.payment_status)}.
           </p>
         </Alert>
       ) : null}
@@ -436,14 +432,13 @@ export function RegistrationForm({
       {hasRegistrationFlow && !registration ? (
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           {recoverRegistration.isPending ? (
-            <Spinner label="Recuperando sua inscrição e o pagamento..." />
+            <Spinner label="Carregando sua inscrição e o pagamento..." />
           ) : null}
 
           {recoveryError ? (
             <Alert variant="warning" title="Inscrição existente">
               <p>
-                Você já está inscrito, mas não foi possível carregar os detalhes
-                agora. Nenhuma nova inscrição será criada.
+                Você já está inscrito, mas não foi possível carregar os detalhes agora.
               </p>
               <p className="mt-2 text-sm">
                 {getErrorMessage(
@@ -460,7 +455,7 @@ export function RegistrationForm({
                 variant="secondary"
                 onClick={() => loadExistingRegistration(recoveryContext)}
               >
-                Carregar inscrição novamente
+                Tentar carregar novamente
               </Button>
             ) : null}
             <Button asChild variant="secondary">
@@ -500,7 +495,7 @@ export function RegistrationForm({
 
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" name="phone" placeholder="+5591999999999" />
+              <Input id="phone" name="phone" placeholder="(91) 99999-9999" />
               {fieldErrors.phone ? (
                 <p className="text-xs font-medium text-red-600">
                   {fieldErrors.phone}
@@ -520,7 +515,7 @@ export function RegistrationForm({
 
             <div className="space-y-2">
               <Label htmlFor="sex">Sexo</Label>
-              <Input id="sex" name="sex" placeholder="F, M ou outro" />
+              <Input id="sex" name="sex" placeholder="Informe como preferir" />
               {fieldErrors.sex ? (
                 <p className="text-xs font-medium text-red-600">
                   {fieldErrors.sex}
@@ -563,7 +558,7 @@ export function RegistrationForm({
 
           <Button className="w-full" type="submit" disabled={isPending}>
             {isPending
-              ? "Processando inscrição..."
+              ? "Enviando inscrição..."
               : requiresPayment
                 ? "Enviar inscrição e gerar Pix"
                 : "Confirmar inscrição gratuita"}

@@ -22,10 +22,9 @@ export default async function Page({ searchParams }: PageProps) {
   return (
     <section className="py-16">
       <Container className="max-w-2xl">
-        <Alert variant="success" title="Pagamento recebido para confirmação">
+        <Alert variant="success" title="Pagamento enviado">
           <p>
-            Acompanhe o status real na sua inscrição. A confirmação será exibida
-            assim que o pagamento for reconhecido.
+            Estamos aguardando a confirmação do pagamento. A situação da sua inscrição será atualizada automaticamente.
           </p>
         </Alert>
 

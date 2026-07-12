@@ -120,7 +120,7 @@ export function RegistrationsTable({
               <div className="min-w-0">
                 <p className="font-medium text-slate-950">{registration.name}</p>
                 <p className="text-sm text-slate-500">
-                  {registration.email ?? "Sem e-mail"} · {registration.phone ?? "Sem telefone"}
+                  {registration.email ?? "E-mail não informado"} · {registration.phone ?? "Sem telefone"}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
                   Inscrição #{registration.id} · Criada em {formatDate(registration.created_at)}

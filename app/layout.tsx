@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     default: "Burnix",
     template: "%s | Burnix",
   },
-  description: "SaaS de inscrições e pagamentos com painel administrativo e fluxo de cobrança.",
+  description: "Inscrições em eventos e pagamentos por Pix em uma experiência simples e segura.",
 };
 
 export default function RootLayout({

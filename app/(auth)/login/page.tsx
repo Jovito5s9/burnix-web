@@ -11,7 +11,7 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle>Entrar</CardTitle>
             <CardDescription>
-              Faça login para ter acesso ao painel administrativo.
+              Acesse sua conta para gerenciar eventos, inscrições e pagamentos.
             </CardDescription>
           </CardHeader>
 

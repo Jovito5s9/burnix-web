@@ -24,8 +24,7 @@ export default async function Page({ searchParams }: PageProps) {
       <Container className="max-w-2xl">
         <Alert variant="warning" title="Aguardando pagamento">
           <p>
-            A confirmação pode levar alguns instantes. O status será atualizado
-            automaticamente nos detalhes da sua inscrição.
+            A confirmação pode levar alguns instantes. Esta página será atualizada automaticamente.
           </p>
         </Alert>
 

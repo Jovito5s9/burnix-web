@@ -118,7 +118,7 @@ export function ContractsPage() {
     return (
       <Alert variant="destructive" title="Erro ao carregar eventos">
         <div className="space-y-3">
-          <p>{error.message}</p>
+          <p>{getErrorMessage(error, "Não foi possível carregar os eventos.")}</p>
           <Button variant="secondary" onClick={() => refetch()}>
             Tentar novamente
           </Button>
@@ -139,7 +139,7 @@ export function ContractsPage() {
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Lista de eventos</h1>
               <p className="mt-2 max-w-2xl text-slate-600">
-                Gerencie os eventos cadastrados no backend Burnix. A rota do backend continua sendo `/contracts/`, mas a interface usa a linguagem de eventos.
+                Crie, publique e acompanhe todos os seus eventos.
               </p>
             </div>
             <Button onClick={() => setIsCreateFormOpen((current) => !current)}>
@@ -164,7 +164,7 @@ export function ContractsPage() {
             <CardHeader>
               <CardTitle>Novo evento</CardTitle>
               <CardDescription>
-                Crie um evento usando o contrato atual de `POST /contracts/`.
+                Preencha as informações abaixo para criar um novo evento.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -219,7 +219,7 @@ export function ContractsPage() {
                   <Label htmlFor="start_date">Início</Label>
                   <Input id="start_date" name="start_date" type="datetime-local" />
                   <p className="text-xs text-slate-500">
-                    Enviado ao backend como data local, sem conversão para UTC e sem sufixo Z.
+                    Informe a data e o horário conforme serão exibidos no evento.
                   </p>
                 </div>
 
@@ -262,7 +262,7 @@ export function ContractsPage() {
               </CardDescription>
             </div>
             <Button asChild variant="secondary" size="sm">
-              <Link href="/dashboard">Ir ao dashboard</Link>
+              <Link href="/dashboard">Ir para a visão geral</Link>
             </Button>
           </CardHeader>
           <CardContent>
@@ -319,9 +319,7 @@ export function ContractsPage() {
             )}
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-slate-500">
-                Usando paginação por `skip` e `limit`: skip {params.skip}, limit {params.limit}.
-              </p>
+              <p className="text-sm text-slate-500">Página {page + 1}{total > 0 ? ` · ${total} eventos` : ""}</p>
               <div className="flex gap-2">
                 <Button
                   variant="secondary"

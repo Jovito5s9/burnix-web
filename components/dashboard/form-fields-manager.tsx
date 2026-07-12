@@ -16,12 +16,23 @@ type FormFieldsManagerProps = {
   contractId: string | number;
 };
 
+const fieldTypeLabels: Record<string, string> = {
+  text: "Texto curto",
+  email: "E-mail",
+  number: "Número",
+  date: "Data",
+  select: "Lista de opções",
+  radio: "Escolha única",
+  checkbox: "Caixas de seleção",
+  multiselect: "Múltiplas opções",
+};
+
 function summarizeOptions(options: ContractFormField["options"]) {
   if (!options) return "Sem opções";
   if (Array.isArray(options)) return `${options.length} opção(ões)`;
 
   const count = [options.items, options.options, options.values].find(Array.isArray)?.length;
-  return count ? `${count} opção(ões)` : "Opções em JSON";
+  return count ? `${count} opção(ões)` : "Opções configuradas";
 }
 
 export function FormFieldsManager({ contractId }: FormFieldsManagerProps) {
@@ -38,7 +49,7 @@ export function FormFieldsManager({ contractId }: FormFieldsManagerProps) {
     setFeedback(null);
 
     if (field.is_system) {
-      setFeedback("Campos de sistema não devem ser removidos pelo painel.");
+      setFeedback("Os campos padrão não podem ser removidos.");
       return;
     }
 
@@ -88,10 +99,10 @@ export function FormFieldsManager({ contractId }: FormFieldsManagerProps) {
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-slate-950">{field.label}</p>
                     {field.required ? <Badge variant="warning">Obrigatório</Badge> : null}
-                    {field.is_system ? <Badge variant="outline">Sistema</Badge> : null}
+                    {field.is_system ? <Badge variant="outline">Campo padrão</Badge> : null}
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    {field.field_key} · {field.type} · ordem {field.order}
+                    Tipo: {fieldTypeLabels[field.type] ?? "Outro"} · posição {field.order}
                   </p>
                   <p className="text-xs text-slate-500">
                     {summarizeOptions(field.options)}
@@ -127,7 +138,7 @@ export function FormFieldsManager({ contractId }: FormFieldsManagerProps) {
             {editingField ? "Editar campo" : "Novo campo"}
           </p>
           <p className="text-sm text-slate-500">
-            O backend valida opções para select, radio, checkbox e multiselect.
+            Escolha o tipo de resposta e configure as opções disponíveis para o participante.
           </p>
         </div>
         <FormFieldEditor

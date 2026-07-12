@@ -31,6 +31,7 @@ import {
   formatCurrency,
   formatDate,
   formatNumber,
+  getPaymentStatusLabel,
   getReadableMethod,
 } from "@/lib/format";
 import { getErrorMessage } from "@/lib/get-error-message";
@@ -48,11 +49,11 @@ function getQrImageSrc(qrCodeBase64: string) {
 
 function PixResultBox({ result }: { result: PaymentPixResponse }) {
   return (
-    <Alert variant="success" title="Pix/OpenPix gerado">
+    <Alert variant="success" title="Pix gerado">
       <div className="space-y-4">
         <div className="grid gap-2 text-sm md:grid-cols-2">
           <p>
-            Pagamento #{result.payment.id} · Status: {result.payment.status}
+            Pagamento #{result.payment.id} · {getPaymentStatusLabel(result.payment.status)}
           </p>
           <p>
             Valor: {formatCurrency(Number(result.payment.amount), result.payment.currency)}
@@ -62,7 +63,7 @@ function PixResultBox({ result }: { result: PaymentPixResponse }) {
         {result.checkout_url ? (
           <Button asChild variant="secondary" size="sm">
             <a href={result.checkout_url} target="_blank" rel="noreferrer">
-              Abrir link de pagamento OpenPix
+              Abrir pagamento
             </a>
           </Button>
         ) : null}
@@ -87,7 +88,7 @@ function PixResultBox({ result }: { result: PaymentPixResponse }) {
           </div>
         ) : result.qr_code ? (
           <div>
-            <p className="mb-1 text-sm font-medium">BR Code Pix</p>
+            <p className="mb-1 text-sm font-medium">Código Pix</p>
             <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-white p-3 text-xs text-slate-800">
               {result.qr_code}
             </pre>
@@ -161,10 +162,9 @@ export function ContractDetail({ id }: ContractDetailProps) {
     const payer_name = String(formData.get("payer_name") ?? "").trim();
     const payer_document = String(formData.get("payer_document") ?? "").trim();
     const clientIdRaw = String(formData.get("client_id") ?? "").trim();
-    const idempotency_key = String(formData.get("idempotency_key") ?? "").trim();
 
     if (!payer_email) {
-      setFeedback("Informe o e-mail do pagador para gerar o Pix/OpenPix.");
+      setFeedback("Informe o E-mail do participante para gerar o Pix.");
       return;
     }
 
@@ -175,13 +175,12 @@ export function ContractDetail({ id }: ContractDetailProps) {
         ...(payer_name ? { payer_name } : {}),
         ...(payer_document ? { payer_document } : {}),
         ...(clientIdRaw ? { client_id: Number(clientIdRaw) } : {}),
-        ...(idempotency_key ? { idempotency_key } : {}),
       });
 
       setPixResult(result);
-      setFeedback("Cobrança Pix/OpenPix criada com sucesso.");
+      setFeedback("Pagamento por Pix criado com sucesso.");
     } catch (error) {
-      setFeedback(getErrorMessage(error, "Não foi possível gerar o Pix/OpenPix."));
+      setFeedback(getErrorMessage(error, "Não foi possível gerar o Pix."));
     }
   }
 
@@ -210,7 +209,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
     return (
       <EmptyState
         title="Evento não encontrado"
-        description="O identificador informado não retornou nenhum evento."
+        description="Não encontramos o evento solicitado."
         action={
           <Button asChild>
             <Link href="/contracts">Voltar para eventos</Link>
@@ -231,7 +230,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 Detalhe do evento
               </h1>
               <p className="mt-2 max-w-2xl text-slate-600">
-                Consulte dados do evento, inscrições e pagamentos usando os endpoints dedicados do contrato.
+                Consulte as informações do evento, acompanhe inscrições e gerencie pagamentos.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -321,13 +320,6 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 </div>
 
                 <div>
-                  <p className="text-sm text-slate-500">Cliente legado</p>
-                  <p className="mt-1 text-sm font-medium text-slate-950">
-                    {contract.client_id ?? "Não vinculado"}
-                  </p>
-                </div>
-
-                <div>
                   <p className="text-sm text-slate-500">Início</p>
                   <p className="mt-1 text-sm font-medium text-slate-950">
                     {formatDate(contract.start_date)}
@@ -362,12 +354,6 @@ export function ContractDetail({ id }: ContractDetailProps) {
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-sm text-slate-500">ID</p>
-                  <p className="mt-1 break-all text-sm font-medium text-slate-950">
-                    {contract.id}
-                  </p>
-                </div>
               </CardContent>
             </Card>
 
@@ -376,7 +362,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
               <CardHeader>
                 <CardTitle>Campos do formulário</CardTitle>
                 <CardDescription>
-                  Configure os campos dinâmicos usados na página pública `/eventos/{contract.id}`.
+                  Defina as perguntas que serão exibidas no formulário público de inscrição.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -389,7 +375,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 <div>
                   <CardTitle>Inscrições vinculadas</CardTitle>
                   <CardDescription>
-                    Dados carregados de `/contracts/{contract.id}/registrations`.
+                    Participantes inscritos neste evento.
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -397,7 +383,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 {registrations.length === 0 ? (
                   <EmptyState
                     title="Nenhuma inscrição para este evento"
-                    description="Quando o fluxo público de inscrição for implementado, os participantes aparecerão aqui."
+                    description="As inscrições aparecerão aqui assim que os participantes confirmarem o envio do formulário."
                   />
                 ) : (
                   <RegistrationsTable
@@ -414,7 +400,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 <div>
                   <CardTitle>Pagamentos vinculados</CardTitle>
                   <CardDescription>
-                    Histórico financeiro carregado de `/contracts/{contract.id}/payments`, fonte confiável após webhook OpenPix.
+                    Acompanhe os pagamentos relacionados a este evento.
                   </CardDescription>
                 </div>
                 <Button asChild variant="secondary" size="sm">
@@ -425,7 +411,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
                 {payments.length === 0 ? (
                   <EmptyState
                     title="Nenhum pagamento para este evento"
-                    description="Após uma cobrança ser criada e confirmada, o pagamento deverá aparecer aqui."
+                    description="Os pagamentos aparecerão aqui assim que forem gerados."
                   />
                 ) : (
                   <div className="space-y-3">
@@ -443,25 +429,20 @@ export function ContractDetail({ id }: ContractDetailProps) {
                           </p>
                           {payment.payer_email || payment.payer_name ? (
                             <p className="text-xs text-slate-500">
-                              {payment.payer_name ?? "Pagador"} · {payment.payer_email ?? "sem e-mail"}
+                              {payment.payer_name ?? "Participante"} · {payment.payer_email ?? "E-mail não informado"}
                             </p>
                           ) : null}
                           {payment.client_id ? (
                             <p className="text-xs text-slate-500">
-                              Inscrição/cliente: {payment.client_id}
+                              Inscrição: #{payment.client_id}
                             </p>
                           ) : null}
                         </div>
                         <div className="flex flex-col items-start gap-2 md:items-end">
                           <StatusBadge kind="payment" status={payment.status} />
                           <p className="text-xs text-slate-500">
-                            {payment.provider} · {getReadableMethod(payment.payment_method ?? payment.method)}
+                            {getReadableMethod(payment.payment_method ?? payment.method)}
                           </p>
-                          {payment.status_detail ? (
-                            <p className="text-xs text-slate-500">
-                              Detalhe: {payment.status_detail}
-                            </p>
-                          ) : null}
                         </div>
                       </div>
                     ))}
@@ -476,7 +457,7 @@ export function ContractDetail({ id }: ContractDetailProps) {
               <CardHeader>
                 <CardTitle>Exportações CSV</CardTitle>
                 <CardDescription>
-                  Baixe inscrições e pagamentos pelas rotas protegidas de exportação do backend.
+                  Baixe relatórios de inscrições e pagamentos em formato CSV.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -500,17 +481,15 @@ export function ContractDetail({ id }: ContractDetailProps) {
                   {exporting === "payments" ? "Exportando pagamentos..." : "Exportar pagamentos CSV"}
                 </Button>
 
-                <p className="text-xs leading-5 text-slate-500">
-                  O token Bearer é enviado pelo interceptor da API também em downloads com responseType blob.
-                </p>
+                <p className="text-xs leading-5 text-slate-500">Os arquivos serão baixados diretamente para o seu dispositivo.</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Gerar Pix/OpenPix</CardTitle>
+                <CardTitle>Gerar pagamento por Pix</CardTitle>
                 <CardDescription>
-                  Usa `POST /payments/contracts/{contract.id}/pix`. O backend calcula o valor com base no preço do evento.
+                  Gere um Pix com base no valor configurado para este evento.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -521,32 +500,32 @@ export function ContractDetail({ id }: ContractDetailProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="payer_email">E-mail do pagador</Label>
+                    <Label htmlFor="payer_email">E-mail do participante</Label>
                     <Input
                       id="payer_email"
                       name="payer_email"
                       type="email"
-                      placeholder="pagador@email.com"
+                      placeholder="participante@email.com"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="payer_name">Nome do pagador</Label>
+                    <Label htmlFor="payer_name">Nome do participante</Label>
                     <Input id="payer_name" name="payer_name" placeholder="Nome completo" />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="payer_document">Documento do pagador</Label>
+                    <Label htmlFor="payer_document">Documento do participante</Label>
                     <Input
                       id="payer_document"
                       name="payer_document"
-                      placeholder="CPF/CNPJ sem formatação"
+                      placeholder="CPF ou CNPJ"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="client_id">ID da inscrição/cliente opcional</Label>
+                    <Label htmlFor="client_id">Número da inscrição (opcional)</Label>
                     <Input
                       id="client_id"
                       name="client_id"
@@ -555,17 +534,8 @@ export function ContractDetail({ id }: ContractDetailProps) {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="idempotency_key">Chave de idempotência opcional</Label>
-                    <Input
-                      id="idempotency_key"
-                      name="idempotency_key"
-                      placeholder="pedido-123"
-                    />
-                  </div>
-
                   <Button className="w-full" type="submit" disabled={pixMutation.isPending}>
-                    {pixMutation.isPending ? "Gerando Pix..." : "Gerar Pix/OpenPix"}
+                    {pixMutation.isPending ? "Gerando Pix..." : "Gerar Pix"}
                   </Button>
                 </form>
               </CardContent>

@@ -24,8 +24,7 @@ export default async function Page({ searchParams }: PageProps) {
       <Container className="max-w-2xl">
         <Alert variant="destructive" title="Não foi possível concluir o pagamento">
           <p>
-            Sua inscrição continua disponível. Abra os detalhes para consultar o
-            status e gerar uma nova cobrança quando permitido.
+            Sua inscrição continua disponível. Abra os detalhes para verificar o pagamento e tentar novamente quando essa opção estiver disponível.
           </p>
         </Alert>
 

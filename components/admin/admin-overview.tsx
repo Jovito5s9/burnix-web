@@ -22,8 +22,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { ApiClientError, getErrorMessage } from "@/lib/get-error-message";
 
 const ADMIN_LIMIT = 50;
-const MAX_ADMIN_LIMIT = 500;
-
 type ResourceKey = "users" | "events" | "clients" | "payments";
 
 type PaginationState = Record<ResourceKey, number>;
@@ -43,7 +41,7 @@ function getTotalLabel(total: number | null, fallbackCount: number) {
 }
 
 export function AdminOverview() {
-  const { user, isAdmin, isLoadingUser } = useAuth();
+  const { isAdmin, isLoadingUser } = useAuth();
   const [skip, setSkip] = useState<PaginationState>({
     users: 0,
     events: 0,
@@ -86,13 +84,10 @@ export function AdminOverview() {
           <Alert variant="destructive" title="Sem permissão">
             <div className="space-y-3">
               <p>
-                O painel administrativo é exibido apenas para usuários com role `admin`, `superuser` ou `super_user`.
-              </p>
-              <p className="text-sm text-red-900/80">
-                Role atual: {user?.role ?? "não identificada"}.
+                Sua conta não possui permissão para acessar o painel administrativo.
               </p>
               <Button asChild variant="secondary">
-                <Link href="/dashboard">Voltar para o dashboard</Link>
+                <Link href="/dashboard">Voltar para a visão geral</Link>
               </Button>
             </div>
           </Alert>
@@ -112,11 +107,11 @@ export function AdminOverview() {
           <Alert variant="destructive" title="Sem permissão">
             <div className="space-y-3">
               <p>
-                O backend recusou o acesso às rotas `/admin/*`. Confirme se o usuário possui role administrativa.
+                Sua conta não possui permissão para consultar estes dados administrativos.
               </p>
               <p className="text-sm text-red-900/80">{getErrorMessage(firstError, "Acesso negado.")}</p>
               <Button asChild variant="secondary">
-                <Link href="/dashboard">Voltar para o dashboard</Link>
+                <Link href="/dashboard">Voltar para a visão geral</Link>
               </Button>
             </div>
           </Alert>
@@ -135,19 +130,18 @@ export function AdminOverview() {
     <section className="py-8">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-3">
-          <Badge>Admin</Badge>
+          <Badge>Administração</Badge>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
                 Painel administrativo
               </h1>
               <p className="mt-2 max-w-3xl text-slate-600">
-                Área preparada para consultar usuários, eventos, participantes e pagamentos pelas rotas
-                administrativas do backend, com paginação por `skip` e `limit` máximo de {MAX_ADMIN_LIMIT}.
+                Consulte usuários, eventos, participantes e pagamentos registrados na plataforma.
               </p>
             </div>
             <Button asChild variant="secondary">
-              <Link href="/dashboard">Voltar para dashboard</Link>
+              <Link href="/dashboard">Voltar para a visão geral</Link>
             </Button>
           </div>
         </div>
@@ -155,7 +149,7 @@ export function AdminOverview() {
         {firstError ? (
           <div className="mb-6">
             <Alert variant="warning" title="Alguns dados administrativos não foram carregados">
-              <p>{getErrorMessage(firstError, "Não foi possível carregar uma das rotas administrativas.")}</p>
+              <p>{getErrorMessage(firstError, "Não foi possível carregar parte dos dados administrativos.")}</p>
             </Alert>
           </div>
         ) : null}
@@ -172,28 +166,28 @@ export function AdminOverview() {
                   <CardDescription>Usuários</CardDescription>
                   <CardTitle>{getTotalLabel(users?.total ?? null, users?.items.length ?? 0)}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-slate-600">Origem: `GET /admin/users`.</CardContent>
+                <CardContent className="text-sm text-slate-600">Contas de organizadores cadastradas.</CardContent>
               </Card>
               <Card>
                 <CardHeader>
                   <CardDescription>Eventos</CardDescription>
                   <CardTitle>{getTotalLabel(events?.total ?? null, events?.items.length ?? 0)}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-slate-600">Origem: `GET /admin/contracts`.</CardContent>
+                <CardContent className="text-sm text-slate-600">Eventos cadastrados na plataforma.</CardContent>
               </Card>
               <Card>
                 <CardHeader>
                   <CardDescription>Participantes</CardDescription>
                   <CardTitle>{getTotalLabel(clients?.total ?? null, clients?.items.length ?? 0)}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-slate-600">Origem: `GET /admin/clients`.</CardContent>
+                <CardContent className="text-sm text-slate-600">Inscrições de participantes registradas.</CardContent>
               </Card>
               <Card>
                 <CardHeader>
                   <CardDescription>Pagamentos</CardDescription>
                   <CardTitle>{getTotalLabel(payments?.total ?? null, payments?.items.length ?? 0)}</CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-slate-600">Origem: `GET /admin/payments`.</CardContent>
+                <CardContent className="text-sm text-slate-600">Pagamentos registrados na plataforma.</CardContent>
               </Card>
             </div>
 
@@ -220,7 +214,7 @@ export function AdminOverview() {
               <Card>
                 <CardHeader>
                   <CardTitle>Eventos</CardTitle>
-                  <CardDescription>Consulta administrativa dos contratos/eventos.</CardDescription>
+                  <CardDescription>Visão administrativa dos eventos cadastrados.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <AdminEventsTable
@@ -239,7 +233,7 @@ export function AdminOverview() {
               <Card>
                 <CardHeader>
                   <CardTitle>Participantes</CardTitle>
-                  <CardDescription>Consulta administrativa de clients/inscrições.</CardDescription>
+                  <CardDescription>Visão administrativa das inscrições de participantes.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <AdminClientsTable
@@ -258,7 +252,7 @@ export function AdminOverview() {
               <Card>
                 <CardHeader>
                   <CardTitle>Pagamentos</CardTitle>
-                  <CardDescription>Consulta administrativa de pagamentos Pix/OpenPix.</CardDescription>
+                  <CardDescription>Visão administrativa dos pagamentos.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <AdminPaymentsTable

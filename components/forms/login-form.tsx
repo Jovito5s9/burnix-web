@@ -36,18 +36,18 @@ export function LoginForm() {
     <form className="space-y-4" onSubmit={handleSubmit}>
       {wasRegistered ? (
         <Alert variant="success" title="Conta criada com sucesso">
-          Agora entre usando o email e a senha cadastrados.
+          Agora entre usando o E-mail e a senha cadastrados.
         </Alert>
       ) : null}
 
       {error ? (
-        <Alert variant="destructive" title="Falha na autenticação">
+        <Alert variant="destructive" title="Não foi possível entrar">
           {error}
         </Alert>
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">E-mail</Label>
         <Input
           id="email"
           type="email"

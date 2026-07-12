@@ -50,7 +50,7 @@ describe("PixPaymentBox", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("oferece nova tentativa quando a cobrança expirou", async () => {
+  it("oferece nova tentativa quando o Pix expirou", async () => {
     const onGeneratePix = vi.fn();
     const user = userEvent.setup();
 
@@ -69,11 +69,11 @@ describe("PixPaymentBox", () => {
     );
 
     expect(
-      screen.getAllByText("Este Pix expirou. Gere uma nova cobrança")
-    ).toHaveLength(2);
+      screen.getAllByText("Este Pix expirou")
+    ).toHaveLength(1);
 
     await user.click(
-      screen.getByRole("button", { name: "Gerar nova cobrança" })
+      screen.getByRole("button", { name: "Gerar novo Pix" })
     );
 
     expect(onGeneratePix).toHaveBeenCalledTimes(1);
@@ -95,12 +95,12 @@ describe("PixPaymentBox", () => {
       />
     );
 
-    expect(screen.getAllByText("Este evento é gratuito")).toHaveLength(2);
+    expect(screen.getAllByText("Este evento é gratuito")).toHaveLength(1);
     expect(
       screen.queryByRole("img", { name: "QR Code para pagamento Pix" })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Gerar Pix|Gerar nova cobrança/ })
+      screen.queryByRole("button", { name: /Gerar Pix|Gerar novo Pix/ })
     ).not.toBeInTheDocument();
   });
 });

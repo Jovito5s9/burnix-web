@@ -6,7 +6,7 @@ export default function Loading() {
     <div className="py-16">
       <Container>
         <div className="flex min-h-[40vh] items-center justify-center">
-          <Spinner label="Carregando dashboard..." />
+          <Spinner label="Carregando visão geral..." />
         </div>
       </Container>
     </div>

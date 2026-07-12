@@ -1,4 +1,6 @@
 ./.env.example
+./.github/workflows/frontend-ci.yml
+./.gitignore
 ./LICENSE.md
 ./README.md
 ./app/(auth)/login/page.tsx
@@ -87,9 +89,15 @@
 ./docs/frontend-stage-1-participant-session.md
 ./docs/frontend-stage-2-participant-registrations.md
 ./docs/frontend-stage-3-registration-duplicate-recovery.md
+./docs/frontend-stage-4-openpix-participant-flow.md
+./docs/frontend-stage-5-tests.md
+./docs/frontend-stage-6-production-copy.md
 ./docs/validation-stage-1.md
 ./docs/validation-stage-2.md
 ./docs/validation-stage-3.md
+./docs/validation-stage-4.md
+./docs/validation-stage-5.md
+./docs/validation-stage-6.md
 ./eslint.config.mjs
 ./hooks/useAdmin.ts
 ./hooks/useAuth.ts
@@ -99,6 +107,7 @@
 ./hooks/useContracts.ts
 ./hooks/useFormFields.ts
 ./hooks/useParticipantAuth.ts
+./hooks/useParticipantPaymentPolling.ts
 ./hooks/useParticipantRegistrations.ts
 ./hooks/usePayments.ts
 ./hooks/usePublicContract.ts
@@ -109,6 +118,7 @@
 ./lib/datetime.ts
 ./lib/format.ts
 ./lib/get-error-message.ts
+./lib/participant-registration-query.ts
 ./lib/query-client.ts
 ./lib/safe-next-path.ts
 ./lib/server/backend.ts
@@ -119,6 +129,7 @@
 ./next.config.ts
 ./package-lock.json
 ./package.json
+./playwright.config.ts
 ./postcss.config.mjs
 ./proxy.ts
 ./public/file.svg
@@ -127,6 +138,7 @@
 ./public/vercel.svg
 ./public/window.svg
 ./scripts/smoke-bff.mjs
+./scripts/validate-stage-4.mjs
 ./services/admin.ts
 ./services/api.ts
 ./services/auth.ts
@@ -144,6 +156,19 @@
 ./services/public-contracts.ts
 ./services/registrations.ts
 ./structure.txt
+./tests/e2e/duplicate-registration.spec.ts
+./tests/e2e/participant-registration.spec.ts
+./tests/e2e/payment-confirmation.spec.ts
+./tests/e2e/support/mock-api.ts
+./tests/fixtures/participant.ts
+./tests/mocks/server.ts
+./tests/setup/navigation-mock.ts
+./tests/setup/render.tsx
+./tests/setup/vitest.setup.ts
+./tests/unit/my-registrations-page.test.tsx
+./tests/unit/pix-payment-box.test.tsx
+./tests/unit/production-copy.test.ts
+./tests/unit/registration-form.test.tsx
 ./tsconfig.json
 ./types/admin.ts
 ./types/auth.ts
@@ -158,3 +183,4 @@
 ./types/payment.ts
 ./types/public-contract.ts
 ./types/registration.ts
+./vitest.config.ts

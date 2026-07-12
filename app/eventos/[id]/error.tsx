@@ -20,7 +20,7 @@ export default function Error({ error, reset }: ErrorProps) {
       <Container className="max-w-3xl">
         <Alert variant="destructive" title="Algo deu errado">
           <div className="space-y-3">
-            <p>{error.message || "Falha inesperada ao carregar o evento público."}</p>
+            <p>Não foi possível carregar este evento. Tente novamente em alguns instantes.</p>
             <Button variant="secondary" onClick={reset}>
               Tentar novamente
             </Button>

@@ -32,7 +32,7 @@ export default async function ParticipantRegisterPage({
           <CardHeader>
             <CardTitle>Criar conta de participante</CardTitle>
             <CardDescription>
-              Sua conta será usada para vincular inscrições com segurança, sem compartilhar a sessão do organizador.
+              Use esta conta para fazer inscrições e acompanhar seus pagamentos com segurança.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

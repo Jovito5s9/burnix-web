@@ -39,12 +39,12 @@ export function ParticipantLoginForm() {
     <form className="space-y-4" onSubmit={handleSubmit}>
       {wasRegistered ? (
         <Alert variant="success" title="Conta criada com sucesso">
-          Entre com o e-mail e a senha cadastrados.
+          Entre com o E-mail e a senha cadastrados.
         </Alert>
       ) : null}
 
       {error ? (
-        <Alert variant="destructive" title="Falha na autenticação">
+        <Alert variant="destructive" title="Não foi possível entrar">
           {error}
         </Alert>
       ) : null}

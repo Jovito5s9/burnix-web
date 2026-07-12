@@ -29,6 +29,20 @@ const billingStatusLabels: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
+const planLabels: Record<string, string> = {
+  free: "Gratuito",
+  starter: "Inicial",
+  basic: "Básico",
+  pro: "Profissional",
+  professional: "Profissional",
+  enterprise: "Empresarial",
+};
+
+function getPlanLabel(plan: string | null) {
+  if (!plan) return "Não informado";
+  return planLabels[plan.toLowerCase()] ?? "Plano personalizado";
+}
+
 function nullable(value: FormDataEntryValue | null) {
   const stringValue = typeof value === "string" ? value.trim() : "";
   return stringValue ? stringValue : null;
@@ -56,38 +70,38 @@ export function BillingProfileForm() {
   if (profileQuery.isLoading) {
     return (
       <div className="flex min-h-40 items-center justify-center">
-        <Spinner label="Carregando perfil de cobrança..." />
+        <Spinner label="Carregando dados de recebimento..." />
       </div>
     );
   }
 
   if (profileQuery.error) {
     return (
-      <Alert variant="destructive" title="Erro ao carregar perfil de cobrança">
-        <p>{getErrorMessage(profileQuery.error, "Não foi possível carregar o perfil de cobrança.")}</p>
+      <Alert variant="destructive" title="Não foi possível carregar os dados de recebimento">
+        <p>{getErrorMessage(profileQuery.error, "Não foi possível carregar os dados de recebimento.")}</p>
       </Alert>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Alert variant={hasProfile ? "info" : "warning"} title={hasProfile ? "Perfil encontrado" : "Perfil ainda não criado"}>
+      <Alert variant={hasProfile ? "info" : "warning"} title={hasProfile ? "Dados de recebimento configurados" : "Configure seus dados de recebimento"}>
         <p>
           {hasProfile
-            ? "Atualize os dados Pix usados pelo backend para repasses e cobrança do organizador."
-            : "O backend retornou 404 para /billing-profiles/me. Preencha os dados abaixo e salve para criar o perfil via PUT /billing-profiles/me."}
+            ? "Mantenha seus dados de recebimento por Pix sempre atualizados."
+            : "Preencha os dados abaixo para configurar o recebimento dos seus pagamentos."}
         </p>
       </Alert>
 
       {upsertMutation.isSuccess ? (
-        <Alert variant="success" title="Perfil de cobrança">
-          <p>Perfil de cobrança salvo com sucesso.</p>
+        <Alert variant="success" title="Dados de recebimento">
+          <p>Dados de recebimento salvos com sucesso.</p>
         </Alert>
       ) : null}
 
       {upsertMutation.error ? (
-        <Alert variant="destructive" title="Perfil de cobrança">
-          <p>{getErrorMessage(upsertMutation.error, "Não foi possível salvar o perfil de cobrança.")}</p>
+        <Alert variant="destructive" title="Dados de recebimento">
+          <p>{getErrorMessage(upsertMutation.error, "Não foi possível salvar os dados de recebimento.")}</p>
         </Alert>
       ) : null}
 
@@ -144,7 +158,7 @@ export function BillingProfileForm() {
 
         <div className="md:col-span-2">
           <Button type="submit" disabled={upsertMutation.isPending}>
-            {upsertMutation.isPending ? "Salvando..." : hasProfile ? "Atualizar perfil" : "Criar perfil"}
+            {upsertMutation.isPending ? "Salvando..." : hasProfile ? "Salvar alterações" : "Salvar dados"}
           </Button>
         </div>
       </form>
@@ -152,17 +166,17 @@ export function BillingProfileForm() {
       {profile ? (
         <div className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm md:grid-cols-2">
           <div>
-            <p className="text-slate-500">Status de cobrança</p>
+            <p className="text-slate-500">Situação dos recebimentos</p>
             <div className="mt-1">
               <Badge variant={profile.billing_status === "active" ? "success" : "warning"}>
-                {billingStatusLabels[profile.billing_status] ?? profile.billing_status}
+                {billingStatusLabels[profile.billing_status] ?? "Indisponível"}
               </Badge>
             </div>
           </div>
 
           <div>
             <p className="text-slate-500">Plano atual</p>
-            <p className="mt-1 font-medium text-slate-950">{profile.current_plan ?? "—"}</p>
+            <p className="mt-1 font-medium text-slate-950">{getPlanLabel(profile.current_plan)}</p>
           </div>
 
           <div>

@@ -89,7 +89,7 @@ export function PublicEventPage({ id }: PublicEventPageProps) {
         <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
           <EmptyState
             title="Evento não encontrado"
-            description="O link informado não retornou nenhum evento público."
+            description="Não encontramos um evento disponível neste endereço."
             action={
               <Button asChild>
                 <Link href="/">Voltar ao início</Link>
@@ -154,9 +154,9 @@ export function PublicEventPage({ id }: PublicEventPageProps) {
                 </div>
               </div>
 
-              <Alert variant="info" title="Inscrição protegida">
+              <Alert variant="info" title="Pronto para se inscrever?">
                 <p>
-                  O evento pode ser consultado sem login. Para se inscrever, a pessoa entra com uma conta de participante separada da conta do organizador. O backend deriva a identidade e o e-mail da sessão autenticada.
+                  Você pode consultar este evento sem entrar. Para concluir a inscrição, acesse sua conta de participante ou crie uma nova.
                 </p>
               </Alert>
             </CardContent>
@@ -167,7 +167,7 @@ export function PublicEventPage({ id }: PublicEventPageProps) {
           <CardHeader>
             <CardTitle>Inscrição</CardTitle>
             <CardDescription>
-              Entre como participante para vincular a inscrição à sua conta. Os campos adicionais são definidos pelo organizador.
+              Entre com sua conta de participante e preencha os dados solicitados pelo organizador.
             </CardDescription>
           </CardHeader>
           <CardContent>

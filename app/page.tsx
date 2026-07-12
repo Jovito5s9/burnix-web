@@ -11,11 +11,11 @@ const highlights = [
   },
   {
     title: "Inscrições públicas",
-    description: "Publique a página `/eventos/{id}`, receba participantes e gere Pix/OpenPix logo após a inscrição.",
+    description: "Compartilhe a página do evento, receba inscrições e ofereça pagamento por Pix quando necessário.",
   },
   {
     title: "Formulários dinâmicos",
-    description: "Configure campos adicionais por evento e envie as respostas em `extra_fields` para o backend.",
+    description: "Personalize o formulário de cada evento para coletar as informações necessárias dos participantes.",
   },
 ];
 
@@ -29,8 +29,7 @@ export default function HomePage() {
             Gestão de eventos, inscrições e pagamentos
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-            Crie eventos, gerencie inscrições e acompanhe pagamentos com uma interface alinhada ao backend atual do Burnix.
-            A API ainda usa rotas de contratos, como `/contracts/`, mas o produto agora trata esses registros como eventos.
+            Organize seus eventos em um só lugar, acompanhe as inscrições e tenha uma visão clara dos pagamentos.
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -52,7 +51,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-slate-600">
-                  Estrutura ideal para organizadores que precisam operar eventos, inscrições públicas e pagamentos Pix/OpenPix.
+                  Tudo o que você precisa para publicar eventos, receber participantes e acompanhar pagamentos por Pix.
                 </p>
               </CardContent>
             </Card>

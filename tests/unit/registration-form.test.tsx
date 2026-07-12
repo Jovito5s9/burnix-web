@@ -82,7 +82,7 @@ describe("RegistrationForm", () => {
       <RegistrationForm contractId={10} fields={[]} requiresPayment />
     );
 
-    await screen.findByText("Participante autenticado");
+    await screen.findByText("Conta de participante");
     await user.type(screen.getByLabelText(/Nome completo/), "Participante A");
 
     await user.dblClick(
@@ -136,7 +136,7 @@ describe("RegistrationForm", () => {
       <RegistrationForm contractId={10} fields={[]} requiresPayment />
     );
 
-    await screen.findByText("Participante autenticado");
+    await screen.findByText("Conta de participante");
     await user.type(screen.getByLabelText(/Nome completo/), "Participante A");
     await user.click(
       screen.getByRole("button", { name: "Enviar inscrição e gerar Pix" })

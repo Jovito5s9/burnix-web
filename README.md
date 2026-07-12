@@ -1,209 +1,63 @@
 # Burnix Web
 
-Frontend Next.js do Burnix, plataforma SaaS multi-organizador para eventos,
-inscrições e pagamentos Pix/OpenPix.
+Aplicação web para criar eventos, receber inscrições e acompanhar pagamentos por Pix. A experiência é separada entre organizadores, participantes e administração, com textos preparados para uso em produção.
 
-Esta versão contém:
+## Principais recursos
 
-```text
-Etapa 1 — separação e proteção da sessão do participante
-Etapa 2 — área “Minhas inscrições”
-Etapa 3 — recuperação de duplicidade e retomada idempotente do pagamento
-Etapa 4 — cobrança Pix segura e polling do status da inscrição
-Etapa 5 — testes unitários, mocks de API, E2E e CI
+### Para participantes
+
+- Consultar a página pública de um evento.
+- Criar uma conta ou entrar com segurança.
+- Enviar a inscrição com os dados solicitados pelo organizador.
+- Pagar por Pix usando QR Code ou código copia e cola.
+- Acompanhar inscrições e pagamentos em **Minhas inscrições**.
+- Gerar um novo Pix quando o anterior expirar.
+
+### Para organizadores
+
+- Criar, publicar e acompanhar eventos.
+- Personalizar as perguntas do formulário de inscrição.
+- Consultar participantes e pagamentos.
+- Gerar Pix para uma inscrição quando necessário.
+- Exportar relatórios em CSV.
+- Configurar a chave Pix e os dados de recebimento.
+
+### Para administração
+
+- Consultar contas de organizadores, eventos, participantes e pagamentos.
+- Acompanhar os principais dados da plataforma com paginação e status traduzidos.
+
+## Experiência de produção
+
+A Etapa 6 revisa os textos apresentados na interface para:
+
+- remover referências técnicas e termos internos;
+- usar mensagens claras em erros, carregamentos e estados vazios;
+- traduzir status antes de exibi-los;
+- padronizar **E-mail**, **Pix**, **QR Code**, **Inscrição**, **Participante**, **Evento** e **Pagamento**;
+- usar somente **participante** e **evento** na comunicação com usuários;
+- ocultar detalhes técnicos de falhas e mostrar orientações seguras.
+
+## Requisitos
+
+- Node.js 20 ou superior.
+- npm 10 ou superior.
+- Serviço da aplicação disponível para uso local ou em ambiente publicado.
+
+## Configuração
+
+Copie o arquivo de exemplo:
+
+```bash
+cp .env.example .env.local
 ```
 
-A implementação está alinhada ao backend Burnix `0.6.0` e às rotas autenticadas
-em `/participant/*`.
-
-## Funcionalidades do participante
-
-Rotas de interface:
-
-```text
-/participante/entrar
-/participante/cadastro
-/eventos/{contract_id}
-/minhas-inscricoes
-/minhas-inscricoes/{registration_id}
-```
-
-Fluxo principal:
-
-```text
-1. O evento público é consultado sem autenticação.
-2. A inscrição exige uma conta de participante.
-3. O backend deriva participant_id, e-mail e owner_user_id da sessão.
-4. Eventos pagos geram Pix pela rota autenticada do participante.
-5. Um conflito de inscrição recupera o registration_id existente.
-6. O pagamento atual é carregado e pode ser retomado conforme o status.
-7. A cobrança pendente inicia polling de 4,5 segundos no detalhe da inscrição.
-8. O polling para em estados finais, após três minutos ou com a aba inativa.
-9. “Minhas inscrições” lista eventos, status, valor e ações de pagamento.
-10. O detalhe mostra os dados da própria inscrição e o painel Pix.
-```
-
-## Sessões separadas
-
-```text
-Organizador  -> cookie burnix.access_token
-Participante -> cookie burnix.participant_access_token
-```
-
-Os cookies são criados por Route Handlers do Next.js e usam:
-
-```text
-HttpOnly
-SameSite=Lax
-Path=/
-Secure em produção
-```
-
-O JWT não é salvo em `localStorage`, não é criado por JavaScript e não é
-devolvido pelas respostas do BFF ao navegador.
-
-## BFF do Next.js
-
-O navegador chama endpoints do próprio frontend:
-
-```text
-POST /api/session/organizer/login
-POST /api/session/participant/login
-POST /api/session/participant/register
-POST /api/session/logout
-
-/api/backend/organizer/*
-/api/backend/participant/*
-/api/backend/public/*
-```
-
-Os Route Handlers leem o cookie HttpOnly correto no servidor e acrescentam o
-Bearer token somente na chamada ao backend FastAPI.
-
-O BFF também:
-
-- bloqueia a troca de categoria de sessão;
-- não permite obter o token bruto pelas rotas proxy;
-- mantém allowlist de paths por categoria;
-- rejeita mutações com origem divergente;
-- remove o cookie correspondente quando o backend retorna `401`;
-- preserva respostas e erros estruturados do backend;
-- devolve resposta pública controlada quando o backend está indisponível.
-
-## “Minhas inscrições”
-
-A listagem consome:
-
-```text
-GET /participant/registrations
-```
-
-Cada cartão mostra:
-
-```text
-nome e data do evento
-status traduzido da inscrição
-status traduzido do pagamento
-valor
-Ver inscrição
-Concluir pagamento
-Gerar novo Pix quando expirado
-Pagamento confirmado quando pago
-```
-
-O detalhe consome:
-
-```text
-GET /participant/registrations/{registration_id}
-```
-
-O painel de pagamento usa:
-
-```text
-POST /participant/registrations/{registration_id}/payments/pix
-```
-
-A rota pode reutilizar uma tentativa pendente ou paga e criar nova tentativa
-após `expired` ou `error`, conforme decisão final do backend.
-
-Enquanto o status está `pending`, o frontend consulta somente o detalhe da
-inscrição a cada 4,5 segundos, por no máximo três minutos. O polling é suspenso
-quando a aba fica inativa e nunca consulta `/payments/{id}`. O AppID e demais
-credenciais OpenPix não existem em variáveis públicas do frontend.
-
-## Duplicidade e retomada
-
-O frontend trata o contrato:
-
-```text
-409 registration_already_exists
-```
-
-como recuperação de fluxo. Ele usa `registration_id`, consulta o detalhe
-autenticado e mostra o pagamento existente. Depois que existe uma inscrição
-ativa, o formulário não cria outra inscrição para compensar falhas do Pix.
-
-Cada solicitação de pagamento recebe `crypto.randomUUID()` como
-`idempotency_key`. A chave é criada antes da mutation e permanece igual durante
-retries automáticos de rede. A constraint e a máquina de estados do backend
-continuam sendo a fonte definitiva.
-
-## Proteção de páginas
-
-```text
-/dashboard/*
-/contracts/*
-/payments/*
-/settings/*
-/admin/*
-  -> exige burnix.access_token
-
-/minhas-inscricoes/*
-  -> exige burnix.participant_access_token
-```
-
-Uma sessão de organizador não substitui uma sessão de participante.
-
-## Rotas do backend consumidas
-
-### Públicas
-
-```text
-GET /public/contracts/{contract_id}
-```
-
-### Participante
-
-```text
-POST /participant-auth/register
-POST /participant-auth/login
-GET  /participant-auth/me
-
-GET  /participant/registrations
-GET  /participant/registrations/{registration_id}
-POST /participant/contracts/{contract_id}/registrations
-POST /participant/registrations/{registration_id}/payments/pix
-```
-
-### Organizador
-
-O projeto mantém os serviços de eventos, inscrições, pagamentos, campos
-dinâmicos, perfil financeiro, integrações, exportações e administração global.
-
-## Variáveis de ambiente
-
-Copie `.env.example` para `.env.local`:
+Variáveis disponíveis:
 
 ```env
 API_URL=http://localhost:8000
 # APP_ORIGIN=https://app.seudominio.com
 ```
-
-`API_URL` é usada somente no servidor Next.js para acessar o backend FastAPI.
-Em produção, prefira uma URL interna da infraestrutura.
-
-`APP_ORIGIN` é opcional e adiciona a origem pública canônica à validação das
-mutações do BFF.
 
 ## Desenvolvimento
 
@@ -212,17 +66,11 @@ npm ci
 npm run dev
 ```
 
-## Testes e validação
+A aplicação ficará disponível, por padrão, em `http://localhost:3000`.
 
-A Etapa 5 usa:
+## Validação
 
-```text
-Vitest + React Testing Library -> componentes e fluxos de interface
-MSW                              -> contratos HTTP do backend nos testes unitários
-Playwright                       -> jornadas completas no navegador
-```
-
-Execução local:
+Execute a mesma sequência usada na integração contínua:
 
 ```bash
 npm run typecheck
@@ -232,7 +80,7 @@ npm run test
 npm run test:e2e
 ```
 
-Comandos auxiliares:
+Comandos adicionais:
 
 ```bash
 npm run test:watch
@@ -241,22 +89,31 @@ npm run test:bff
 npm run test:stage4
 ```
 
-Os testes E2E sobem o Next.js automaticamente e simulam somente os endpoints
-do BFF. Não exigem backend, banco, credenciais OpenPix ou acesso ao sandbox.
-O workflow `.github/workflows/frontend-ci.yml` executa a mesma sequência em
-pushes e pull requests.
+## Arquitetura técnica
 
-Relatórios detalhados:
+Esta seção mantém os termos técnicos necessários à manutenção do projeto.
 
-```text
-docs/frontend-stage-1-participant-session.md
-docs/validation-stage-1.md
-docs/frontend-stage-2-participant-registrations.md
-docs/validation-stage-2.md
-docs/frontend-stage-3-registration-duplicate-recovery.md
-docs/validation-stage-3.md
-docs/frontend-stage-4-openpix-participant-flow.md
-docs/validation-stage-4.md
-docs/frontend-stage-5-tests.md
-docs/validation-stage-5.md
-```
+- Next.js 16 com App Router e Route Handlers.
+- React 19 e TanStack Query.
+- BFF no Next.js para separar as sessões de organizador e participante.
+- Cookies `HttpOnly`, `SameSite=Lax` e `Secure` em produção.
+- Integração do backend FastAPI com pagamentos Pix/OpenPix.
+- Vitest, React Testing Library e MSW para testes de componentes e contratos HTTP.
+- Playwright para jornadas completas no navegador.
+- Workflow de CI em `.github/workflows/frontend-ci.yml`.
+
+As rotas internas, regras de sessão, idempotência, tratamento de duplicidade e ciclo de pagamentos continuam documentados nos arquivos técnicos em `docs/`.
+
+## Documentação
+
+- `docs/frontend-stage-1-participant-session.md`
+- `docs/frontend-stage-2-participant-registrations.md`
+- `docs/frontend-stage-3-registration-duplicate-recovery.md`
+- `docs/frontend-stage-4-openpix-participant-flow.md`
+- `docs/frontend-stage-5-tests.md`
+- `docs/frontend-stage-6-production-copy.md`
+- `docs/validation-stage-6.md`
+
+## Licença
+
+Consulte `LICENSE.md`.
