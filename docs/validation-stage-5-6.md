@@ -13,7 +13,7 @@ npm run typecheck
 npm run lint
 npm test
 npm run test:stage4
-API_URL=http://127.0.0.1:8000 APP_ORIGIN=https://app.example.com npm run build
+API_URL=http://127.0.0.1:3000 APP_ORIGIN=https://app.example.com npm run build
 npm run test:bff
 git diff --check
 ```

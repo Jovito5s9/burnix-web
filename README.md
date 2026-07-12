@@ -44,7 +44,7 @@ cp .env.example .env.local
 Variáveis principais:
 
 ```env
-API_URL=http://localhost:8000
+API_URL=http://localhost:3000
 APP_ORIGIN=http://localhost:3000
 ```
 
@@ -87,6 +87,21 @@ POST /contracts/{id}/reopen
 ```
 
 Quando o evento possui inscrições ou pagamentos, preço e moeda são bloqueados na interface. O backend continua sendo a autoridade final para essa regra.
+
+### Paginação da lista de eventos
+
+`GET /contracts` deve responder com metadados de paginação:
+
+```json
+{
+  "items": [],
+  "total": 143,
+  "skip": 20,
+  "limit": 20
+}
+```
+
+A interface usa `total` como quantidade global e habilita a próxima página somente quando `skip + items.length < total`. Respostas legadas em array são rejeitadas para impedir que o tamanho da página seja exibido como total geral.
 
 ## Disponibilidade pública de inscrições
 
@@ -151,12 +166,12 @@ O `Dockerfile` usa build multi-stage e a saída standalone do Next.js:
 
 ```bash
 docker build \
-  --build-arg API_URL=http://backend:8000 \
+  --build-arg API_URL=http://backend:3000 \
   --build-arg APP_ORIGIN=https://app.seudominio.com \
   -t burnix-web .
 
 docker run --rm -p 3000:3000 \
-  -e API_URL=http://backend:8000 \
+  -e API_URL=http://backend:3000 \
   -e APP_ORIGIN=https://app.seudominio.com \
   burnix-web
 ```
@@ -176,7 +191,7 @@ npm run typecheck
 npm run lint
 npm run test
 npm run test:stage4
-API_URL=http://127.0.0.1:8000 APP_ORIGIN=https://app.example.com npm run build
+API_URL=http://127.0.0.1:3000 APP_ORIGIN=https://app.example.com npm run build
 npm run test:bff
 npm run test:e2e
 ```

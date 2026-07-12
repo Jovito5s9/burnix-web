@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const DEVELOPMENT_BACKEND_URL = "http://localhost:8000";
+const DEVELOPMENT_BACKEND_URL = "http://localhost:3000";
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
 const DEFAULT_BODY_LIMITS = {

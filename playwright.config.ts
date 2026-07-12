@@ -38,7 +38,7 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {
-      API_URL: "http://127.0.0.1:8000",
+      API_URL: "http://127.0.0.1:3000",
       APP_ORIGIN: "http://127.0.0.1:3100",
     },
   },

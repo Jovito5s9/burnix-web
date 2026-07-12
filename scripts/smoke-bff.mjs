@@ -185,9 +185,12 @@ async function createMockBackend() {
     ) {
       assert.equal(request.headers.authorization, "Bearer organizer-secret-token");
       assert.equal(request.headers["x-request-id"], "bff-smoke-collections");
-      return sendJson(response, 200, [], {
-        "x-request-id": request.headers["x-request-id"],
-      });
+      return sendJson(
+        response,
+        200,
+        { items: [], total: 0, skip: 0, limit: 50 },
+        { "x-request-id": request.headers["x-request-id"] }
+      );
     }
 
     if (
@@ -558,6 +561,15 @@ async function main() {
         "bff-smoke-collections"
       );
       assert.equal(collectionResponse.headers.get("location"), null);
+
+      if (path.startsWith("/contracts?")) {
+        assert.deepEqual(await collectionResponse.json(), {
+          items: [],
+          total: 0,
+          skip: 0,
+          limit: 50,
+        });
+      }
     }
 
     const unexpectedRedirect = await fetch(

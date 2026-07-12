@@ -77,4 +77,6 @@ export type ContractListParams = {
 export type ContractListResponse = {
   items: Contract[];
   total: number;
+  skip: number;
+  limit: number;
 };

@@ -41,8 +41,10 @@ export function useContracts(params?: ContractListParams) {
   });
 
   return {
-    contracts: contractsQuery.data ?? [],
-    total: contractsQuery.data?.length ?? 0,
+    contracts: contractsQuery.data?.items ?? [],
+    total: contractsQuery.data?.total ?? 0,
+    skip: contractsQuery.data?.skip ?? params?.skip ?? 0,
+    limit: contractsQuery.data?.limit ?? params?.limit ?? 0,
     isLoading: contractsQuery.isLoading,
     isFetching: contractsQuery.isFetching,
     error: contractsQuery.error,

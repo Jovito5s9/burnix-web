@@ -34,7 +34,7 @@ export function ContractsPage() {
     [page]
   );
 
-  const { contracts, total, isLoading, isFetching, error, refetch } =
+  const { contracts, total, skip, limit, isLoading, isFetching, error, refetch } =
     useContracts(params);
   const createContractMutation = useCreateContract();
 
@@ -74,8 +74,15 @@ export function ContractsPage() {
     );
   }
 
-  const hasPreviousPage = page > 0;
-  const hasNextPage = contracts.length === PAGE_SIZE;
+  const effectiveLimit = limit > 0 ? limit : PAGE_SIZE;
+  const currentPage = Math.floor(skip / effectiveLimit) + 1;
+  const totalPages = Math.max(1, Math.ceil(total / effectiveLimit));
+  const hasPreviousPage = skip > 0;
+  const hasNextPage = skip + contracts.length < total;
+  const totalEventsLabel = `${formatNumber(total)} ${total === 1 ? "evento" : "eventos"}`;
+  const pageEventsLabel = `${formatNumber(contracts.length)} ${
+    contracts.length === 1 ? "evento" : "eventos"
+  }`;
 
   return (
     <section className="py-8">
@@ -134,7 +141,8 @@ export function ContractsPage() {
             <div>
               <CardTitle>Eventos cadastrados</CardTitle>
               <CardDescription>
-                {total} eventos nesta página. Página {page + 1}. {isFetching ? "Atualizando..." : null}
+                {totalEventsLabel} no total. Exibindo {pageEventsLabel} nesta página. Página {currentPage} de {totalPages}.{" "}
+                {isFetching ? "Atualizando..." : null}
               </CardDescription>
             </div>
             <Button asChild variant="secondary" size="sm">
@@ -202,7 +210,7 @@ export function ContractsPage() {
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-slate-500">
-                Página {page + 1}{total > 0 ? ` · ${total} eventos` : ""}
+                Página {currentPage} de {totalPages} · {totalEventsLabel} no total
               </p>
               <div className="flex gap-2">
                 <Button

@@ -25,10 +25,13 @@ describe("serviço de eventos", () => {
   });
 
   it("usa a URL canônica da coleção sem barra final", async () => {
-    apiMock.get.mockResolvedValue({ data: [] });
+    const listResponse = { items: [], total: 0, skip: 0, limit: 50 };
+    apiMock.get.mockResolvedValue({ data: listResponse });
     apiMock.post.mockResolvedValue({ data: { id: 10 } });
 
-    await listContracts({ skip: 0, limit: 50 });
+    await expect(listContracts({ skip: 0, limit: 50 })).resolves.toEqual(
+      listResponse
+    );
     await createContract({ title: "Evento", status: "draft" });
 
     expect(apiMock.get).toHaveBeenCalledWith("/contracts", {
@@ -37,6 +40,17 @@ describe("serviço de eventos", () => {
     expect(apiMock.post).toHaveBeenCalledWith("/contracts", {
       title: "Evento",
       status: "draft",
+    });
+  });
+
+  it("rejeita a resposta legada em array para não exibir um total incorreto", async () => {
+    apiMock.get.mockResolvedValue({ data: [] });
+
+    await expect(listContracts({ skip: 0, limit: 20 })).rejects.toMatchObject({
+      name: "ApiClientError",
+      status: 502,
+      code: "invalid_contract_list_response",
+      retryable: false,
     });
   });
 

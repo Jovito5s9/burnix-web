@@ -1,17 +1,44 @@
+import { ApiClientError } from "@/lib/get-error-message";
 import { api } from "@/services/api";
 import type {
   Contract,
   ContractActionPayload,
   ContractCreatePayload,
   ContractListParams,
+  ContractListResponse,
   ContractStatusAction,
   ContractUpdatePayload,
 } from "@/types/contract";
 import type { Payment } from "@/types/payment";
 import type { Registration } from "@/types/registration";
 
+function isContractListResponse(value: unknown): value is ContractListResponse {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+
+  const response = value as Partial<ContractListResponse>;
+
+  return (
+    Array.isArray(response.items) &&
+    Number.isInteger(response.total) &&
+    Number(response.total) >= 0 &&
+    Number.isInteger(response.skip) &&
+    Number(response.skip) >= 0 &&
+    Number.isInteger(response.limit) &&
+    Number(response.limit) > 0
+  );
+}
+
 export async function listContracts(params?: ContractListParams) {
-  const { data } = await api.get<Contract[]>("/contracts", { params });
+  const { data } = await api.get<unknown>("/contracts", { params });
+
+  if (!isContractListResponse(data)) {
+    throw new ApiClientError("Não foi possível carregar a lista de eventos.", {
+      status: 502,
+      code: "invalid_contract_list_response",
+      retryable: false,
+    });
+  }
+
   return data;
 }
 

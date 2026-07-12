@@ -22,13 +22,13 @@ describe("contrato do proxy BFF", () => {
   });
 
   it("monta URLs canônicas sem acrescentar barra final", () => {
-    process.env.API_URL = "http://backend.internal:8000/";
+    process.env.API_URL = "http://backend.internal:3000/";
 
     expect(buildBackendUrl("/contracts", "?skip=0&limit=50")).toBe(
-      "http://backend.internal:8000/contracts?skip=0&limit=50"
+      "http://backend.internal:3000/contracts?skip=0&limit=50"
     );
     expect(buildBackendUrl("payments")).toBe(
-      "http://backend.internal:8000/payments"
+      "http://backend.internal:3000/payments"
     );
   });
 

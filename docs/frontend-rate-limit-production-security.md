@@ -46,7 +46,7 @@ Nenhum `4xx` é repetido automaticamente. Isso inclui `400`, `401`, `403`, `404`
 Em produção:
 
 ```env
-API_URL=http://backend:8000
+API_URL=http://backend:3000
 APP_ORIGIN=https://app.seudominio.com
 ```
 
@@ -102,7 +102,7 @@ npm run typecheck
 npm run lint
 npm test
 npm run test:stage4
-API_URL=http://127.0.0.1:8000 APP_ORIGIN=https://app.example.com npm run build
+API_URL=http://127.0.0.1:3000 APP_ORIGIN=https://app.example.com npm run build
 npm run test:bff
 npm audit --omit=dev
 ```
