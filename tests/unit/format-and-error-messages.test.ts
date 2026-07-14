@@ -9,7 +9,7 @@ import {
 } from "@/lib/format";
 import { ApiClientError, getErrorMessage } from "@/lib/get-error-message";
 
-describe("textos de produção", () => {
+describe("formatação e mensagens de erro", () => {
   it("traduz estados de pagamento antes de exibi-los", () => {
     expect(getPaymentStatusLabel("pending")).toBe("Aguardando pagamento");
     expect(getPaymentStatusLabel("error")).toBe("Não concluído");

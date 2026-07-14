@@ -10,25 +10,26 @@ import {
 import { server } from "@/tests/mocks/server";
 import { renderWithQueryClient } from "@/tests/setup/render";
 
+const registrationsUrl =
+  "*/api/backend/participant/participant/registrations";
+
 describe("MyRegistrationsPage", () => {
-  it("renderiza apenas as inscrições devolvidas para o participante autenticado", async () => {
+  it("renderiza as inscrições retornadas pela API", async () => {
     server.use(
-      http.get(
-        "*/api/backend/participant/participant/registrations",
-        () =>
-          HttpResponse.json([
-            buildRegistrationListItem({
-              registration_status: "confirmed",
-              payment_status: "paid",
-              latest_payment: {
-                ...pendingPaymentFixture,
-                status: "paid",
-                checkout_url: null,
-                qr_code_base64: null,
-                copy_and_paste: null,
-              },
-            }),
-          ])
+      http.get(registrationsUrl, () =>
+        HttpResponse.json([
+          buildRegistrationListItem({
+            registration_status: "confirmed",
+            payment_status: "paid",
+            latest_payment: {
+              ...pendingPaymentFixture,
+              status: "paid",
+              checkout_url: null,
+              qr_code_base64: null,
+              copy_and_paste: null,
+            },
+          }),
+        ])
       )
     );
 
@@ -36,8 +37,25 @@ describe("MyRegistrationsPage", () => {
 
     expect(await screen.findByText("Corrida Burnix 2026")).toBeVisible();
     expect(screen.getByText("Pagamento confirmado")).toBeVisible();
+    expect(screen.getByText("1 inscrição")).toBeVisible();
     expect(
-      screen.queryByText("Evento secreto da participante B")
-    ).not.toBeInTheDocument();
+      screen.getByRole("link", { name: "Ver inscrição" })
+    ).toHaveAttribute("href", "/minhas-inscricoes/42");
+  });
+
+  it("exibe um estado vazio quando não existem inscrições", async () => {
+    server.use(
+      http.get(registrationsUrl, () => HttpResponse.json([]))
+    );
+
+    renderWithQueryClient(<MyRegistrationsPage />);
+
+    expect(
+      await screen.findByText("Você ainda não se inscreveu em nenhum evento.")
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "Voltar ao início" })).toHaveAttribute(
+      "href",
+      "/"
+    );
   });
 });

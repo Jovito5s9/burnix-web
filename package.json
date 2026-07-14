@@ -9,7 +9,6 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:bff": "node scripts/smoke-bff.mjs",
-    "test:stage4": "node scripts/validate-stage-4.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

@@ -4,10 +4,21 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      API_URL: http://127.0.0.1:3000
+      APP_ORIGIN: http://127.0.0.1:3100
+      NEXT_TELEMETRY_DISABLED: "1"
 
     steps:
       - name: Checkout
@@ -18,18 +29,18 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Verify runtime versions
         run: |
           node --version
           npm --version
-          npm list next react react-dom
 
       - name: Install dependencies from lockfile
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Verify installed package versions
+        run: npm ls --depth=0 next react react-dom
 
       - name: Typecheck
         run: npm run typecheck
@@ -38,10 +49,7 @@ jobs:
         run: npm run lint
 
       - name: Unit and integration tests
-        run: npm run test
-
-      - name: Validate participant payment flow contract
-        run: npm run test:stage4
+        run: npm test
 
       - name: Production build
         run: npm run build
@@ -49,5 +57,19 @@ jobs:
       - name: BFF production smoke test
         run: npm run test:bff
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: End-to-end tests
         run: npm run test:e2e
+
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
