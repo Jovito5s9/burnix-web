@@ -1,6 +1,7 @@
 # Burnix Web
 
 Frontend da Burnix para organizadores, participantes e administração. A aplicação usa Next.js App Router, React, TanStack Query e um BFF interno para manter tokens de sessão fora do JavaScript do navegador.
+O backend deste projeto está em um repositório privado por conter elementos relacionados à infraestrutura e à lógica do produto. A documentação técnica e a arquitetura estão disponíveis [`aqui`](docs/docs_backend/README.md).
 
 ## Requisitos
 
